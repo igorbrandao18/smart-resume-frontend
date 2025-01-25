@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { ref } from 'vue'
+
+const app = ref(null)
 </script>
 
 <template>
-  <v-app>
+  <v-app ref="app">
     <v-main>
-      <router-view />
+      <RouterView />
     </v-main>
   </v-app>
 </template>

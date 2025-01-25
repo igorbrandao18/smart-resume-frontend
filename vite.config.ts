@@ -8,11 +8,19 @@ import vuetify from 'vite-plugin-vuetify'
 export default defineConfig({
   plugins: [
     vue(),
-    vuetify(),
+    vuetify({ autoImport: true })
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
+  optimizeDeps: {
+    include: ['esri-loader']
+  },
+  server: {
+    fs: {
+      strict: false
     }
   }
 })

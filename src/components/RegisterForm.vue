@@ -67,14 +67,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { userService } from '@/services/api'
 import { formatPhone } from '@/utils/masks'
 import { useUserStore } from '@/stores/user'
+import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { currentUser } = storeToRefs(userStore)
+
+// Initialize form ref
 const form = ref(null)
 const isLoading = ref(false)
 
@@ -190,6 +194,14 @@ const handlePhoneInput = (event: Event) => {
   const value = input.value
   formData.phone = formatPhone(value)
 }
+
+// Ensure store is ready
+onMounted(() => {
+  if (!userStore) {
+    console.error('User store not initialized')
+    return
+  }
+})
 </script>
 
 <style scoped>

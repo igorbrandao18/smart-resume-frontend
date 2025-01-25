@@ -30,10 +30,27 @@ const vuetify = createVuetify({
   }
 })
 
+const pinia = createPinia()
 const app = createApp(App)
 
-app.use(createPinia())
+// Install plugins
+app.use(pinia)
 app.use(router)
 app.use(vuetify)
 
+// Error handling
+app.config.errorHandler = (err, instance, info) => {
+  console.error('Global error:', err)
+  console.error('Component:', instance)
+  console.error('Info:', info)
+}
+
+// Warning handler
+app.config.warnHandler = (msg, instance, trace) => {
+  console.warn('Global warning:', msg)
+  console.warn('Component:', instance)
+  console.warn('Trace:', trace)
+}
+
+// Mount the app
 app.mount('#app') 

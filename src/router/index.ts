@@ -24,6 +24,11 @@ const router = createRouter({
       component: () => import('@/views/VerifyEmailView.vue')
     },
     {
+      path: '/map',
+      name: 'map',
+      component: () => import('@/views/MapView.vue')
+    },
+    {
       path: '/complete-profile',
       name: 'complete-profile',
       component: () => import('@/views/CompleteProfileView.vue')
