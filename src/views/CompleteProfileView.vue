@@ -402,13 +402,77 @@ const searchQuery = ref('')
 const searchResults = ref<any[]>([])
 let searchTimeout: any = null
 
+// Variáveis reativas para o estado do mapa
+const mapState = reactive({
+  pin: {
+    latitude: 0,
+    longitude: 0,
+    isVisible: false
+  },
+  view: null as any,
+  graphicsLayer: null as any
+})
+
+// Configuração do marcador
+const createMarkerSymbol = () => ({
+  type: "simple-marker",
+  style: "circle",
+  color: [91, 33, 182], // Cor roxa (primary)
+  outline: {
+    color: [255, 255, 255],
+    width: 2
+  },
+  size: "12px"
+})
+
+// Função para adicionar pin no mapa
+const addPinToMap = (latitude: number, longitude: number) => {
+  if (!mapState.graphicsLayer || !mapState.view) return
+
+  // Remove pins existentes
+  mapState.graphicsLayer.removeAll()
+
+  // Cria o ponto
+  const point = {
+    type: "point",
+    longitude,
+    latitude,
+    spatialReference: mapState.view.spatialReference
+  }
+
+  // Cria o gráfico com o pin
+  const pinGraphic = new (window as any).esri.Graphic({
+    geometry: point,
+    symbol: createMarkerSymbol()
+  })
+
+  // Adiciona o pin ao mapa
+  mapState.graphicsLayer.add(pinGraphic)
+
+  // Atualiza o estado
+  mapState.pin = {
+    latitude,
+    longitude,
+    isVisible: true
+  }
+
+  // Atualiza as coordenadas no formulário
+  formData.latitude = latitude
+  formData.longitude = longitude
+}
+
 // Inicialização do mapa
 onMounted(async () => {
-  // Carrega o CSS do ArcGIS
+  // Carrega o CSS do ArcGIS primeiro
   const link = document.createElement('link')
   link.rel = 'stylesheet'
   link.href = 'https://js.arcgis.com/4.29/esri/themes/light/main.css'
   document.head.appendChild(link)
+
+  // Espera o CSS carregar
+  await new Promise((resolve) => {
+    link.onload = resolve
+  })
 
   // Carrega o script do ArcGIS
   const script = document.createElement('script')
@@ -422,101 +486,61 @@ onMounted(async () => {
       "esri/Graphic",
       "esri/layers/GraphicsLayer"
     ], function(Map: any, MapView: any, Graphic: any, GraphicsLayer: any) {
-      const map = new Map({
-        basemap: 'osm'
-      })
+      try {
+        // Cria o mapa base
+        const map = new Map({
+          basemap: 'osm'
+        });
 
-      // Cria a camada de gráficos
-      graphicsLayer = new GraphicsLayer()
-      map.add(graphicsLayer)
+        // Cria a camada de gráficos
+        const graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
 
-      view = new MapView({
-        container: mapViewDiv.value!,
-        map: map,
-        zoom: 4,
-        center: [-53.2316, -10.2491],
-        constraints: {
-          rotationEnabled: false,
-          minZoom: 4,
-          maxZoom: 18
+        // Configura a visualização do mapa
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 4,
+          center: [-53.2316, -10.2491], // Centro do Brasil
+          constraints: {
+            rotationEnabled: false,
+            minZoom: 4,
+            maxZoom: 18
+          }
+        });
+
+        // Salva as referências no estado
+        mapState.view = view;
+        mapState.graphicsLayer = graphicsLayer;
+
+        // Configura o evento de clique no mapa
+        view.on("click", async (event: any) => {
+          const { latitude, longitude } = event.mapPoint;
+          addPinToMap(latitude, longitude);
+          await reverseGeocodeWithNominatim(latitude, longitude);
+        });
+
+        // Se já tiver coordenadas salvas, mostra o pin
+        if (formData.latitude && formData.longitude) {
+          addPinToMap(formData.latitude, formData.longitude);
+          view.goTo({
+            target: {
+              type: "point",
+              longitude: formData.longitude,
+              latitude: formData.latitude
+            },
+            zoom: 18
+          });
         }
-      })
 
-      // Configuração do marcador
-      markerSymbol = {
-        type: "picture-marker",
-        url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-          <svg width="32" height="48" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
-            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feOffset result="offOut" in="SourceAlpha" dx="0" dy="2" />
-              <feGaussianBlur result="blurOut" in="offOut" stdDeviation="2" />
-              <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
-            </filter>
-            <path fill="#5B21B6" filter="url(#shadow)" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
-          </svg>
-        `),
-        width: "32px",
-        height: "48px",
-        yoffset: "24px"
+        // Confirma que o mapa foi carregado
+        view.when(() => {
+          console.log("Mapa carregado com sucesso!");
+        });
+      } catch (error) {
+        console.error("Erro ao inicializar o mapa:", error);
       }
-
-      // Configura o evento de clique no mapa
-      view.on("click", async (event: any) => {
-        // Obtém as coordenadas do clique
-        const { latitude, longitude } = event.mapPoint
-
-        // Atualiza as coordenadas no formulário
-        formData.latitude = latitude
-        formData.longitude = longitude
-
-        // Cria o ponto para o marcador
-        const point = {
-          type: "point",
-          longitude,
-          latitude
-        }
-
-        // Remove marcadores existentes
-        graphicsLayer.removeAll()
-
-        // Cria e adiciona o novo marcador
-        pointGraphic = new Graphic({
-          geometry: point,
-          symbol: markerSymbol
-        })
-        graphicsLayer.add(pointGraphic)
-
-        // Anima a queda do marcador
-        animateMarkerDrop(pointGraphic)
-
-        // Busca o endereço das coordenadas
-        await reverseGeocodeWithNominatim(latitude, longitude)
-      })
-
-      // Se já tiver coordenadas, posiciona o pin
-      if (formData.latitude && formData.longitude) {
-        const point = {
-          type: "point",
-          longitude: formData.longitude,
-          latitude: formData.latitude
-        }
-
-        pointGraphic = new Graphic({
-          geometry: point,
-          symbol: markerSymbol
-        })
-
-        graphicsLayer.add(pointGraphic)
-        view.goTo({
-          target: point,
-          zoom: 18
-        })
-      }
-
-      view.when(() => {
-        console.log("Mapa carregado com sucesso!")
-      })
-    })
+    });
   }
 })
 
@@ -615,39 +639,9 @@ watch(
     () => formData.latitude,
     () => formData.longitude
   ],
-  async ([newLat, newLon]) => {
+  ([newLat, newLon]) => {
     if (newLat && newLon && !isLoadingAddress.value) {
-      // Cria o ponto com as novas coordenadas
-      const point = {
-        type: "point",
-        longitude: newLon,
-        latitude: newLat
-      }
-
-      // Remove marcadores existentes e adiciona o novo
-      if (view && graphicsLayer) {
-        graphicsLayer.removeAll()
-        pointGraphic = new Graphic({
-          geometry: point,
-          symbol: markerSymbol
-        })
-        graphicsLayer.add(pointGraphic)
-
-        // Centraliza o mapa nas novas coordenadas
-        view.goTo({
-          target: point,
-          zoom: 18
-        }, {
-          duration: 500,
-          easing: 'ease-out'
-        }).then(() => {
-          // Anima o pin após centralizar
-          animateMarkerDrop(pointGraphic)
-        })
-      }
-
-      // Busca o endereço das novas coordenadas
-      await reverseGeocodeWithNominatim(newLat, newLon)
+      addPinToMap(newLat, newLon)
     }
   }
 )
@@ -697,30 +691,7 @@ const updateMapFromForm = async () => {
       formData.longitude = lon
 
       // Atualiza o pin no mapa
-      const point = {
-        type: "point",
-        longitude: lon,
-        latitude: lat
-      }
-
-      // Remove o pin antigo e adiciona o novo
-      graphicsLayer.removeAll()
-      pointGraphic = new Graphic({
-        geometry: point,
-        symbol: markerSymbol
-      })
-      graphicsLayer.add(pointGraphic)
-
-      // Centraliza o mapa na nova posição
-      view.goTo({
-        target: point,
-        zoom: 18
-      }, {
-        duration: 500,
-        easing: 'ease-out'
-      }).then(() => {
-        animateMarkerDrop(pointGraphic)
-      })
+      addPinToMap(lat, lon)
     }
   } catch (error) {
     console.error('Erro ao atualizar mapa:', error)
@@ -883,34 +854,18 @@ const selectSearchResult = async (result: any) => {
     const lat = parseFloat(result.lat)
     const lon = parseFloat(result.lon)
     
-    formData.latitude = lat
-    formData.longitude = lon
+    // Adiciona o pin no local selecionado
+    addPinToMap(lat, lon)
 
-    if (view && pointGraphic) {
-      const point = {
-        type: "point",
-        longitude: lon,
-        latitude: lat
-      }
-
-      // Remove o marcador antigo e adiciona o novo
-      graphicsLayer.removeAll()
-      pointGraphic = new Graphic({
-        geometry: point,
-        symbol: markerSymbol
-      })
-      graphicsLayer.add(pointGraphic)
-
-      // Centraliza o mapa na nova posição
-      view.goTo({
-        target: point,
+    // Centraliza o mapa
+    if (mapState.view) {
+      mapState.view.goTo({
+        target: {
+          type: "point",
+          longitude: lon,
+          latitude: lat
+        },
         zoom: 18
-      }, {
-        duration: 500,
-        easing: 'ease-out'
-      }).then(() => {
-        // Anima o pin após centralizar
-        animateMarkerDrop(pointGraphic)
       })
     }
 
@@ -1136,42 +1091,23 @@ const getCurrentLocation = () => {
       async (position) => {
         const { latitude, longitude } = position.coords
         
-        formData.latitude = latitude
-        formData.longitude = longitude
+        // Adiciona o pin na localização atual
+        addPinToMap(latitude, longitude)
 
-        if (view && graphicsLayer) {
-          const point = {
-            type: "point",
-            longitude,
-            latitude
-          }
-
-          // Remove marcadores existentes
-          graphicsLayer.removeAll()
-
-          // Cria e adiciona o novo marcador
-          pointGraphic = new Graphic({
-            geometry: point,
-            symbol: markerSymbol
-          })
-          graphicsLayer.add(pointGraphic)
-
-          // Centraliza o mapa na nova posição
-          view.goTo({
-            target: point,
+        // Centraliza o mapa
+        if (mapState.view) {
+          mapState.view.goTo({
+            target: {
+              type: "point",
+              longitude,
+              latitude
+            },
             zoom: 18
-          }, {
-            duration: 500,
-            easing: 'ease-out'
-          }).then(() => {
-            // Anima o pin após centralizar
-            animateMarkerDrop(pointGraphic)
           })
-
-          // Busca o endereço
-          await reverseGeocodeWithNominatim(latitude, longitude)
         }
 
+        // Busca o endereço
+        await reverseGeocodeWithNominatim(latitude, longitude)
         isLocating.value = false
       },
       (error) => {
@@ -1350,23 +1286,29 @@ const getCurrentLocation = () => {
 
 .map-section {
   width: 100%;
-  height: 500px;
+  height: 400px !important;
   position: relative;
+  background: #f8fafc;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 0 auto;
+  max-width: 800px;
 }
 
 .map-container {
   width: 100%;
   height: 100%;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+  position: relative;
   background: #f8fafc;
-  border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
-.map-view {
+#viewDiv {
   width: 100%;
   height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #f8fafc;
 }
 
 /* Barra de Pesquisa Aprimorada */
@@ -1654,24 +1596,33 @@ const getCurrentLocation = () => {
 
 /* ESRI Map Overrides */
 :deep(.esri-view) {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  background: #f8fafc !important;
 }
 
 :deep(.esri-view-surface) {
-  outline: none;
+  outline: none !important;
 }
 
 :deep(.esri-ui) {
-  z-index: 10;
+  z-index: 10 !important;
 }
 
-:deep(.esri-attribution) {
-  background: rgba(255, 255, 255, 0.9) !important;
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #f8fafc;
 }
 
-:deep(.esri-zoom) {
-  margin: 16px !important;
+#viewDiv {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #f8fafc;
 }
 
 /* Botão de Localização */
