@@ -426,6 +426,7 @@ onMounted(async () => {
         basemap: 'osm'
       })
 
+      // Cria a camada de gráficos
       graphicsLayer = new GraphicsLayer()
       map.add(graphicsLayer)
 
@@ -433,10 +434,15 @@ onMounted(async () => {
         container: mapViewDiv.value!,
         map: map,
         zoom: 4,
-        center: [-53.2316, -10.2491]
+        center: [-53.2316, -10.2491],
+        constraints: {
+          rotationEnabled: false,
+          minZoom: 4,
+          maxZoom: 18
+        }
       })
 
-      // Configuração inicial do marcador
+      // Configuração do marcador
       markerSymbol = {
         type: "picture-marker",
         url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
@@ -454,6 +460,39 @@ onMounted(async () => {
         yoffset: "24px"
       }
 
+      // Configura o evento de clique no mapa
+      view.on("click", async (event: any) => {
+        // Obtém as coordenadas do clique
+        const { latitude, longitude } = event.mapPoint
+
+        // Atualiza as coordenadas no formulário
+        formData.latitude = latitude
+        formData.longitude = longitude
+
+        // Cria o ponto para o marcador
+        const point = {
+          type: "point",
+          longitude,
+          latitude
+        }
+
+        // Remove marcadores existentes
+        graphicsLayer.removeAll()
+
+        // Cria e adiciona o novo marcador
+        pointGraphic = new Graphic({
+          geometry: point,
+          symbol: markerSymbol
+        })
+        graphicsLayer.add(pointGraphic)
+
+        // Anima a queda do marcador
+        animateMarkerDrop(pointGraphic)
+
+        // Busca o endereço das coordenadas
+        await reverseGeocodeWithNominatim(latitude, longitude)
+      })
+
       // Se já tiver coordenadas, posiciona o pin
       if (formData.latitude && formData.longitude) {
         const point = {
@@ -468,15 +507,11 @@ onMounted(async () => {
         })
 
         graphicsLayer.add(pointGraphic)
-
         view.goTo({
           target: point,
           zoom: 18
         })
       }
-
-      // Configura o evento de clique
-      setupMapClickEvent()
 
       view.when(() => {
         console.log("Mapa carregado com sucesso!")
@@ -574,9 +609,52 @@ const updateFormAddress = (attributes: any) => {
   }
 }
 
+// Watch para coordenadas
+watch(
+  [
+    () => formData.latitude,
+    () => formData.longitude
+  ],
+  async ([newLat, newLon]) => {
+    if (newLat && newLon && !isLoadingAddress.value) {
+      // Cria o ponto com as novas coordenadas
+      const point = {
+        type: "point",
+        longitude: newLon,
+        latitude: newLat
+      }
+
+      // Remove marcadores existentes e adiciona o novo
+      if (view && graphicsLayer) {
+        graphicsLayer.removeAll()
+        pointGraphic = new Graphic({
+          geometry: point,
+          symbol: markerSymbol
+        })
+        graphicsLayer.add(pointGraphic)
+
+        // Centraliza o mapa nas novas coordenadas
+        view.goTo({
+          target: point,
+          zoom: 18
+        }, {
+          duration: 500,
+          easing: 'ease-out'
+        }).then(() => {
+          // Anima o pin após centralizar
+          animateMarkerDrop(pointGraphic)
+        })
+      }
+
+      // Busca o endereço das novas coordenadas
+      await reverseGeocodeWithNominatim(newLat, newLon)
+    }
+  }
+)
+
 // Função para atualizar o mapa quando os campos são preenchidos manualmente
 const updateMapFromForm = async () => {
-  if (!view || !pointGraphic) return
+  if (!view) return
 
   try {
     // Monta o endereço completo
@@ -745,19 +823,6 @@ watch(
   }
 )
 
-// Watch para coordenadas
-watch(
-  [
-    () => formData.latitude,
-    () => formData.longitude
-  ],
-  async ([newLat, newLon]) => {
-    if (newLat && newLon && !isLoadingAddress.value) {
-      await reverseGeocodeWithNominatim(newLat, newLon)
-    }
-  }
-)
-
 const handleSubmit = async () => {
   if (!userStore.currentUser?.id) return
   
@@ -878,6 +943,7 @@ const animateMarkerDrop = (graphic: any) => {
     const elapsed = currentTime - start
     const progress = Math.min(elapsed / duration, 1)
 
+    // Função de easing para o efeito bounce
     const easeOutBounce = (x: number): number => {
       const n1 = 7.5625
       const d1 = 2.75
@@ -894,8 +960,10 @@ const animateMarkerDrop = (graphic: any) => {
     }
 
     const currentY = startY + (endY - startY) * easeOutBounce(progress)
+
+    // Atualiza a posição do marcador
     graphic.symbol = {
-      ...graphic.symbol,
+      ...markerSymbol,
       yoffset: `${currentY}px`
     }
 
@@ -904,7 +972,7 @@ const animateMarkerDrop = (graphic: any) => {
     } else {
       // Garante que o offset final está correto
       graphic.symbol = {
-        ...graphic.symbol,
+        ...markerSymbol,
         yoffset: `${endY}px`
       }
     }
@@ -1071,15 +1139,17 @@ const getCurrentLocation = () => {
         formData.latitude = latitude
         formData.longitude = longitude
 
-        if (view && pointGraphic) {
+        if (view && graphicsLayer) {
           const point = {
             type: "point",
             longitude,
             latitude
           }
 
-          // Remove o marcador antigo e adiciona o novo
+          // Remove marcadores existentes
           graphicsLayer.removeAll()
+
+          // Cria e adiciona o novo marcador
           pointGraphic = new Graphic({
             geometry: point,
             symbol: markerSymbol
@@ -1097,21 +1167,9 @@ const getCurrentLocation = () => {
             // Anima o pin após centralizar
             animateMarkerDrop(pointGraphic)
           })
-        }
 
-        // Busca o endereço
-        try {
-          const details = await reverseGeocodeWithNominatim(latitude, longitude)
-          if (details && details.address) {
-            formData.street = details.address.road || details.address.street || ''
-            formData.number = details.address.house_number || ''
-            formData.neighborhood = details.address.suburb || details.address.neighbourhood || ''
-            formData.city = details.address.city || details.address.town || details.address.municipality || ''
-            formData.state = details.address.state || ''
-            formData.zipCode = details.address.postcode || ''
-          }
-        } catch (error) {
-          console.error('Erro ao buscar endereço:', error)
+          // Busca o endereço
+          await reverseGeocodeWithNominatim(latitude, longitude)
         }
 
         isLocating.value = false
@@ -1122,48 +1180,6 @@ const getCurrentLocation = () => {
       }
     )
   }
-}
-
-// Atualiza o evento de clique no mapa
-const setupMapClickEvent = () => {
-  if (!view) return
-
-  view.on("click", async (event: any) => {
-    const { latitude, longitude } = event.mapPoint
-
-    // Atualiza as coordenadas no formulário
-    formData.latitude = latitude
-    formData.longitude = longitude
-
-    // Atualiza o pin no mapa
-    const point = {
-      type: "point",
-      longitude,
-      latitude
-    }
-
-    // Remove o pin antigo e adiciona o novo
-    graphicsLayer.removeAll()
-    pointGraphic = new Graphic({
-      geometry: point,
-      symbol: markerSymbol
-    })
-    graphicsLayer.add(pointGraphic)
-
-    // Centraliza o mapa na nova posição
-    view.goTo({
-      target: point,
-      zoom: 18
-    }, {
-      duration: 500,
-      easing: 'ease-out'
-    }).then(() => {
-      animateMarkerDrop(pointGraphic)
-    })
-
-    // Busca o endereço das coordenadas
-    await reverseGeocodeWithNominatim(latitude, longitude)
-  })
 }
 </script>
 
