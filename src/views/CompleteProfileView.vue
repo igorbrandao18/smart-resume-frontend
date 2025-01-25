@@ -170,7 +170,7 @@
                     <div class="coordinate-box">
                       <div class="coordinate-content">
                         <span class="coordinate-label">Latitude</span>
-                        <span class="coordinate-value">{{ formData.latitude.toFixed(6) }}°</span>
+                        <span class="coordinate-value">{{ formData.latitude ? formData.latitude.toFixed(6) : '0.000000' }}°</span>
                       </div>
                       <v-btn
                         icon="mdi-content-copy"
@@ -182,7 +182,7 @@
                     <div class="coordinate-box">
                       <div class="coordinate-content">
                         <span class="coordinate-label">Longitude</span>
-                        <span class="coordinate-value">{{ formData.longitude.toFixed(6) }}°</span>
+                        <span class="coordinate-value">{{ formData.longitude ? formData.longitude.toFixed(6) : '0.000000' }}°</span>
                       </div>
                       <v-btn
                         icon="mdi-content-copy"
@@ -388,8 +388,8 @@ const formData = reactive({
   neighborhood: '',
   city: '',
   state: '',
-  latitude: 0,
-  longitude: 0
+  latitude: -10.2491,  // Centro do Brasil
+  longitude: -53.2316  // Centro do Brasil
 })
 
 const errors = reactive({
@@ -402,15 +402,12 @@ const searchQuery = ref('')
 const searchResults = ref<any[]>([])
 let searchTimeout: any = null
 
-// Variáveis reativas para o estado do mapa
+// Estado do mapa
 const mapState = reactive({
-  pin: {
-    latitude: 0,
-    longitude: 0,
-    isVisible: false
-  },
   view: null as any,
-  graphicsLayer: null as any
+  map: null as any,
+  graphicsLayer: null as any,
+  currentPin: null as any
 })
 
 // Configuração do marcador
@@ -427,38 +424,63 @@ const createMarkerSymbol = () => ({
 
 // Função para adicionar pin no mapa
 const addPinToMap = (latitude: number, longitude: number) => {
-  if (!mapState.graphicsLayer || !mapState.view) return
+  if (!mapState.view) return
 
-  // Remove pins existentes
-  mapState.graphicsLayer.removeAll()
+  try {
+    // Remove o pin atual se existir
+    if (mapState.currentPin) {
+      mapState.graphicsLayer.remove(mapState.currentPin)
+      mapState.currentPin = null
+    }
 
-  // Cria o ponto
-  const point = {
-    type: "point",
-    longitude,
-    latitude,
-    spatialReference: mapState.view.spatialReference
+    // Cria o ponto
+    const point = {
+      type: "point",
+      longitude,
+      latitude
+    }
+
+    // Cria o símbolo do pin
+    const pinSymbol = {
+      type: "simple-marker",
+      style: "circle",
+      color: [91, 33, 182],
+      outline: {
+        color: [255, 255, 255],
+        width: 2
+      },
+      size: "12px"
+    }
+
+    // Cria o novo pin
+    const pinGraphic = new (window as any).esri.Graphic({
+      geometry: point,
+      symbol: pinSymbol
+    })
+
+    // Adiciona o pin e salva a referência
+    mapState.graphicsLayer.add(pinGraphic)
+    mapState.currentPin = pinGraphic
+
+    // Atualiza as coordenadas no formulário
+    formData.latitude = latitude
+    formData.longitude = longitude
+
+    // Centraliza o mapa na nova posição de forma segura
+    const target = {
+      target: point,
+      zoom: 18
+    }
+
+    // Usa setTimeout para garantir que a view está pronta
+    setTimeout(() => {
+      if (mapState.view && !mapState.view.destroyed) {
+        mapState.view.goTo(target)
+      }
+    }, 100)
+  } catch (error) {
+    console.error('Erro ao adicionar pin:', error)
   }
-
-  // Cria o gráfico com o pin
-  const pinGraphic = new (window as any).esri.Graphic({
-    geometry: point,
-    symbol: createMarkerSymbol()
-  })
-
-  // Adiciona o pin ao mapa
-  mapState.graphicsLayer.add(pinGraphic)
-
-  // Atualiza o estado
-  mapState.pin = {
-    latitude,
-    longitude,
-    isVisible: true
-  }
-
-  // Atualiza as coordenadas no formulário
-  formData.latitude = latitude
-  formData.longitude = longitude
 }
 
 // Inicialização do mapa
@@ -490,57 +512,52 @@ onMounted(async () => {
         // Cria o mapa base
         const map = new Map({
           basemap: 'osm'
-        });
+        })
 
         // Cria a camada de gráficos
-        const graphicsLayer = new GraphicsLayer();
-        map.add(graphicsLayer);
+        const graphicsLayer = new GraphicsLayer()
+        map.add(graphicsLayer)
 
         // Configura a visualização do mapa
         const view = new MapView({
           container: "viewDiv",
           map: map,
           zoom: 4,
-          center: [-53.2316, -10.2491], // Centro do Brasil
+          center: [-53.2316, -10.2491],
           constraints: {
             rotationEnabled: false,
             minZoom: 4,
             maxZoom: 18
           }
-        });
+        })
 
         // Salva as referências no estado
-        mapState.view = view;
-        mapState.graphicsLayer = graphicsLayer;
+        mapState.map = map
+        mapState.view = view
+        mapState.graphicsLayer = graphicsLayer
 
         // Configura o evento de clique no mapa
         view.on("click", async (event: any) => {
-          const { latitude, longitude } = event.mapPoint;
-          addPinToMap(latitude, longitude);
-          await reverseGeocodeWithNominatim(latitude, longitude);
-        });
+          const { latitude, longitude } = event.mapPoint
+          addPinToMap(latitude, longitude)
+          await reverseGeocodeWithNominatim(latitude, longitude)
+        })
 
         // Se já tiver coordenadas salvas, mostra o pin
         if (formData.latitude && formData.longitude) {
-          addPinToMap(formData.latitude, formData.longitude);
-          view.goTo({
-            target: {
-              type: "point",
-              longitude: formData.longitude,
-              latitude: formData.latitude
-            },
-            zoom: 18
-          });
+          view.when(() => {
+            addPinToMap(formData.latitude, formData.longitude)
+          })
         }
 
         // Confirma que o mapa foi carregado
         view.when(() => {
-          console.log("Mapa carregado com sucesso!");
-        });
+          console.log("Mapa carregado com sucesso!")
+        })
       } catch (error) {
-        console.error("Erro ao inicializar o mapa:", error);
+        console.error("Erro ao inicializar o mapa:", error)
       }
-    });
+    })
   }
 })
 
@@ -857,31 +874,33 @@ const selectSearchResult = async (result: any) => {
     // Adiciona o pin no local selecionado
     addPinToMap(lat, lon)
 
-    // Centraliza o mapa
-    if (mapState.view) {
-      mapState.view.goTo({
-        target: {
-          type: "point",
-          longitude: lon,
-          latitude: lat
-        },
-        zoom: 18
-      })
-    }
-
-    // Preenche os campos do formulário
+    // Preenche os campos do formulário com os dados do endereço
     if (result.address) {
-      formData.street = result.address.road || result.address.street || ''
+      formData.street = result.address.road || 
+                       result.address.street || 
+                       result.address.footway ||
+                       result.address.path || ''
+      
       formData.number = result.address.house_number || ''
-      formData.neighborhood = result.address.suburb || result.address.neighbourhood || ''
-      formData.city = result.address.city || result.address.town || result.address.municipality || ''
-      formData.state = result.address.state || ''
+      
+      formData.neighborhood = result.address.suburb || 
+                             result.address.neighbourhood || 
+                             result.address.district || ''
+      
+      formData.city = result.address.city || 
+                     result.address.town || 
+                     result.address.municipality || ''
+      
+      formData.state = result.address.state_code || 
+                      result.address.state || ''
+      
       formData.zipCode = result.address.postcode || ''
     }
 
     // Limpa a busca
-    searchQuery.value = result.display_name
+    searchQuery.value = ''
     searchResults.value = []
+
   } catch (error) {
     console.error('Erro ao selecionar endereço:', error)
   }
@@ -1093,18 +1112,6 @@ const getCurrentLocation = () => {
         
         // Adiciona o pin na localização atual
         addPinToMap(latitude, longitude)
-
-        // Centraliza o mapa
-        if (mapState.view) {
-          mapState.view.goTo({
-            target: {
-              type: "point",
-              longitude,
-              latitude
-            },
-            zoom: 18
-          })
-        }
 
         // Busca o endereço
         await reverseGeocodeWithNominatim(latitude, longitude)
