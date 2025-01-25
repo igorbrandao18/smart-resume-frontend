@@ -23,6 +23,9 @@
                 variant="outlined"
                 color="primary"
                 bg-color="grey-lighten-4"
+                :error-messages="errors.cnpj"
+                :loading="isLoadingAddress"
+                @blur="handleCnpjBlur"
                 class="custom-field"
               />
             </v-col>
@@ -219,8 +222,61 @@ const formData = reactive({
 })
 
 const errors = reactive({
-  zipCode: ''
+  zipCode: '',
+  cnpj: ''
 })
+
+const handleCnpjBlur = async () => {
+  if (!formData.cnpj || formData.cnpj.length < 14) return
+  
+  try {
+    isLoadingAddress.value = true
+    const cnpjData = await userService.getCnpjData(formData.cnpj.replace(/\D/g, ''))
+    
+    if (!cnpjData.estabelecimento) {
+      throw new Error('Dados do estabelecimento não encontrados')
+    }
+    
+    // Verifica se o CNPJ está ativo
+    if (cnpjData.estabelecimento.situacao_cadastral !== 'Ativa') {
+      throw new Error('CNPJ está inativo ou com situação irregular')
+    }
+    
+    // Preenche os dados da empresa
+    formData.name = cnpjData.razao_social
+    formData.email = cnpjData.estabelecimento.email || ''
+    formData.phone = cnpjData.estabelecimento.telefone1 ? 
+      `${cnpjData.estabelecimento.ddd1 || ''}${cnpjData.estabelecimento.telefone1}` : ''
+    
+    // Preenche o endereço
+    formData.street = `${cnpjData.estabelecimento.tipo_logradouro} ${cnpjData.estabelecimento.logradouro}`.trim()
+    formData.number = cnpjData.estabelecimento.numero
+    formData.complement = cnpjData.estabelecimento.complemento || ''
+    formData.neighborhood = cnpjData.estabelecimento.bairro
+    formData.city = cnpjData.estabelecimento.cidade.nome
+    formData.state = cnpjData.estabelecimento.estado.sigla
+    formData.zipCode = cnpjData.estabelecimento.cep
+    
+    errors.cnpj = ''
+  } catch (error: any) {
+    errors.cnpj = error.message || 'CNPJ não encontrado ou inválido'
+    console.error('Erro ao buscar CNPJ:', error)
+    
+    // Limpa os campos em caso de erro
+    formData.name = ''
+    formData.email = ''
+    formData.phone = ''
+    formData.street = ''
+    formData.number = ''
+    formData.complement = ''
+    formData.neighborhood = ''
+    formData.city = ''
+    formData.state = ''
+    formData.zipCode = ''
+  } finally {
+    isLoadingAddress.value = false
+  }
+}
 
 const handleCepBlur = async () => {
   if (!formData.zipCode || formData.zipCode.length < 8) return
@@ -250,16 +306,25 @@ const handleSubmit = async () => {
   try {
     isLoading.value = true
     
-    await userService.updateUser(userStore.currentUser.id, {
-      ...formData,
+    // Prepara os dados no formato da API
+    const userData = {
+      secondaryEmail: formData.email,
       cnpj: formData.cnpj.replace(/\D/g, ''),
-      zipCode: formData.zipCode.replace(/\D/g, '')
-    })
+      street: formData.street,
+      number: formData.number,
+      neighborhood: formData.neighborhood,
+      city: formData.city,
+      state: formData.state,
+      zipCode: formData.zipCode.replace(/\D/g, ''),
+      latitude: 0, // Será atualizado na próxima tela
+      longitude: 0 // Será atualizado na próxima tela
+    }
     
+    // Atualiza o usuário e navega imediatamente após sucesso
+    await userService.updateUser(userStore.currentUser.id, userData)
     router.push('/map')
   } catch (error: any) {
     console.error('Error updating user:', error)
-  } finally {
     isLoading.value = false
   }
 }

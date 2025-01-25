@@ -5,7 +5,7 @@ const api = axios.create({
 })
 
 export interface User {
-  id?: string
+  id: string
   name: string
   email: string
   phone: string
@@ -21,9 +21,57 @@ export interface User {
   longitude?: number
 }
 
-export interface ApiError {
-  message: string
+interface CnpjResponse {
+  cnpj_raiz: string
+  razao_social: string
+  capital_social: string
+  porte: {
+    id: string
+    descricao: string
+  }
+  natureza_juridica: {
+    id: string
+    descricao: string
+  }
+  estabelecimento: {
+    cnpj: string
+    tipo: string
+    nome_fantasia: string
+    situacao_cadastral: string
+    data_situacao_cadastral: string
+    data_inicio_atividade: string
+    tipo_logradouro: string
+    logradouro: string
+    numero: string
+    complemento: string | null
+    bairro: string
+    cep: string
+    ddd1: string
+    telefone1: string
+    email: string
+    atividade_principal: {
+      id: string
+      descricao: string
+    }
+    estado: {
+      id: number
+      nome: string
+      sigla: string
+    }
+    cidade: {
+      id: number
+      nome: string
+    }
+  }
+}
+
+class ApiError extends Error {
   status: number
+
+  constructor(error: any) {
+    super(error.response?.data?.message || 'Erro ao processar requisição')
+    this.status = error.response?.status || 500
+  }
 }
 
 export const userService = {
@@ -87,15 +135,21 @@ export const userService = {
     }
   },
 
-  async updateUser(userId: string, data: Partial<User>) {
+  async updateUser(userId: string, data: Partial<User>): Promise<User> {
     try {
       const response = await api.put(`/users/${userId}`, data)
       return response.data
     } catch (error: any) {
-      throw {
-        message: error.response?.data?.message || 'Erro ao atualizar usuário',
-        status: error.response?.status || 500
-      } as ApiError
+      throw new ApiError(error)
     }
-  }
+  },
+
+  async getCnpjData(cnpj: string): Promise<CnpjResponse> {
+    try {
+      const response = await api.get(`/users/cnpj/${cnpj}`)
+      return response.data
+    } catch (error: any) {
+      throw new ApiError(error)
+    }
+  },
 } 

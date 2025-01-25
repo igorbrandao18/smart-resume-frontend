@@ -160,6 +160,7 @@ const isFormValid = computed(() => {
 
 const handleSubmit = async () => {
   if (isLoading.value) return
+  errors.form = ''
   isLoading.value = true
 
   try {
@@ -169,21 +170,17 @@ const handleSubmit = async () => {
       phone: formData.phone.replace(/\D/g, '')
     }
     
-    // Cria o usuário e atualiza a store imediatamente
+    // Cria o usuário e navega imediatamente após sucesso
     const user = await userService.create(userData)
     
     if (user?.id) {
-      // Atualiza store antes da navegação
       userStore.setCurrentUser(user)
       userStore.setVerificationData(user.email, user.id)
-      
-      // Navega para a verificação
       router.push('/verify-email')
     }
   } catch (error: any) {
     console.error('Error creating user:', error)
     errors.form = Array.isArray(error.message) ? error.message[0] : error.message
-  } finally {
     isLoading.value = false
   }
 }
