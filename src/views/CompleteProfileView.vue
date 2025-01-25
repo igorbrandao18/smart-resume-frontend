@@ -370,6 +370,8 @@ const mapViewDiv = ref<HTMLElement | null>(null)
 
 let view: any = null
 let searchWidget: any = null
+let pointGraphic: any = null
+let graphicsLayer: any = null
 
 // Removendo temporariamente a proteção da rota para teste
 // if (!userStore.currentUser?.id) {
@@ -416,36 +418,27 @@ onMounted(async () => {
   document.head.appendChild(script)
 
   script.onload = () => {
-    // Aguarda o carregamento completo da API
     (window as any).require([
       "esri/Map",
       "esri/views/MapView",
       "esri/Graphic",
       "esri/layers/GraphicsLayer"
     ], function(Map: any, MapView: any, Graphic: any, GraphicsLayer: any) {
-      // Cria o mapa com OpenStreetMap como base
       const map = new Map({
         basemap: 'osm'
       })
 
-      // Cria a camada de gráficos para o marcador
-      const graphicsLayer = new GraphicsLayer()
+      graphicsLayer = new GraphicsLayer()
       map.add(graphicsLayer)
 
-      // Cria a visualização do mapa
       view = new MapView({
         container: mapViewDiv.value!,
         map: map,
         zoom: 4,
-        center: [-53.2316, -10.2491], // Centro do Brasil
-        constraints: {
-          rotationEnabled: false,
-          minZoom: 4,
-          maxZoom: 18
-        }
+        center: [-53.2316, -10.2491]
       })
 
-      // Cria o marcador
+      // Cria o marcador inicial
       const point = {
         type: "point",
         longitude: -53.2316,
@@ -469,14 +462,54 @@ onMounted(async () => {
         yoffset: "24px"
       }
 
-      const pointGraphic = new Graphic({
+      pointGraphic = new Graphic({
         geometry: point,
         symbol: markerSymbol
       })
 
       graphicsLayer.add(pointGraphic)
 
-      // Aguarda o carregamento completo da visualização
+      // Adiciona evento de clique no mapa
+      view.on("click", async (event: any) => {
+        // Obtém as coordenadas do clique
+        const { latitude, longitude } = event.mapPoint
+
+        // Atualiza as coordenadas no formulário
+        formData.latitude = latitude
+        formData.longitude = longitude
+
+        // Atualiza a posição do marcador
+        const point = {
+          type: "point",
+          longitude,
+          latitude
+        }
+
+        // Remove o marcador antigo e adiciona o novo
+        graphicsLayer.removeAll()
+        pointGraphic = new Graphic({
+          geometry: point,
+          symbol: markerSymbol
+        })
+        graphicsLayer.add(pointGraphic)
+        animateMarkerDrop(pointGraphic)
+
+        // Busca o endereço das coordenadas
+        try {
+          const details = await reverseGeocodeWithNominatim(latitude, longitude)
+          if (details && details.address) {
+            formData.street = details.address.road || details.address.street || ''
+            formData.number = details.address.house_number || ''
+            formData.neighborhood = details.address.suburb || details.address.neighbourhood || ''
+            formData.city = details.address.city || details.address.town || details.address.municipality || ''
+            formData.state = details.address.state || ''
+            formData.zipCode = details.address.postcode || ''
+          }
+        } catch (error) {
+          console.error('Erro ao buscar endereço:', error)
+        }
+      })
+
       view.when(() => {
         console.log("Mapa carregado com sucesso!")
       })
@@ -744,51 +777,121 @@ const handleSearchInput = async () => {
 // Função para selecionar um resultado da busca
 const selectSearchResult = async (result: any) => {
   try {
-    // Atualiza as coordenadas
+    // Atualiza as coordenadas com precisão
     const lat = parseFloat(result.lat)
     const lon = parseFloat(result.lon)
     
     formData.latitude = lat
     formData.longitude = lon
 
-    // Atualiza o mapa
+    // Atualiza o mapa com a posição exata
     if (view && pointGraphic) {
       const point = {
         type: "point",
         longitude: lon,
-        latitude: lat
+        latitude: lat,
+        spatialReference: {
+          wkid: 4326
+        }
       }
       
+      // Atualiza a geometria do ponto
       pointGraphic.geometry = point
-      animateMarkerDrop(pointGraphic)
-      
+
+      // Centraliza o mapa na posição exata
       view.goTo({
         target: point,
-        zoom: 18
+        zoom: 18,
+        rotation: 0
       }, {
         duration: 1000,
         easing: 'ease-out'
+      }).then(() => {
+        // Garante que o pin está na posição correta após a animação
+        pointGraphic.geometry = point
       })
+
+      // Atualiza o símbolo do marcador para garantir o offset correto
+      pointGraphic.symbol = {
+        type: "picture-marker",
+        url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+          <svg width="32" height="48" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
+            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feOffset result="offOut" in="SourceAlpha" dx="0" dy="2" />
+              <feGaussianBlur result="blurOut" in="offOut" stdDeviation="2" />
+              <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+            </filter>
+            <path fill="#5B21B6" filter="url(#shadow)" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
+          </svg>
+        `),
+        width: "32px",
+        height: "48px",
+        yoffset: "24px" // Ajusta o offset para o pin ficar exatamente na posição
+      }
     }
 
-    // Busca detalhes do endereço
-    const details = await reverseGeocodeWithNominatim(lat, lon)
-    if (details && details.address) {
-      // Preenche os campos do formulário
-      formData.street = details.address.road || details.address.street || ''
-      formData.number = details.address.house_number || ''
-      formData.neighborhood = details.address.suburb || details.address.neighbourhood || ''
-      formData.city = details.address.city || details.address.town || details.address.municipality || ''
-      formData.state = details.address.state || ''
-      formData.zipCode = details.address.postcode || ''
+    // Preenche os campos do formulário com os dados do resultado
+    if (result.address) {
+      formData.street = result.address.road || result.address.street || ''
+      formData.number = result.address.house_number || ''
+      formData.neighborhood = result.address.suburb || result.address.neighbourhood || ''
+      formData.city = result.address.city || result.address.town || result.address.municipality || ''
+      formData.state = result.address.state || ''
+      formData.zipCode = result.address.postcode || ''
     }
 
-    // Limpa os resultados da busca
+    // Limpa a busca
     searchQuery.value = result.display_name
     searchResults.value = []
   } catch (error) {
     console.error('Erro ao selecionar endereço:', error)
   }
+}
+
+// Função para animar a queda do marcador
+const animateMarkerDrop = (graphic: any) => {
+  const startY = -100
+  const endY = 24 // Mantém o offset original do marcador
+  const duration = 500
+  const start = performance.now()
+
+  const animate = (currentTime: number) => {
+    const elapsed = currentTime - start
+    const progress = Math.min(elapsed / duration, 1)
+
+    const easeOutBounce = (x: number): number => {
+      const n1 = 7.5625
+      const d1 = 2.75
+
+      if (x < 1 / d1) {
+        return n1 * x * x
+      } else if (x < 2 / d1) {
+        return n1 * (x -= 1.5 / d1) * x + 0.75
+      } else if (x < 2.5 / d1) {
+        return n1 * (x -= 2.25 / d1) * x + 0.9375
+      } else {
+        return n1 * (x -= 2.625 / d1) * x + 0.984375
+      }
+    }
+
+    const currentY = startY + (endY - startY) * easeOutBounce(progress)
+    graphic.symbol = {
+      ...graphic.symbol,
+      yoffset: `${currentY}px`
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(animate)
+    } else {
+      // Garante que o offset final está correto
+      graphic.symbol = {
+        ...graphic.symbol,
+        yoffset: `${endY}px`
+      }
+    }
+  }
+
+  requestAnimationFrame(animate)
 }
 
 // Função para buscar endereço usando OpenStreetMap (Nominatim)
