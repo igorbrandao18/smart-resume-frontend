@@ -119,8 +119,8 @@
 
             <!-- Layout do Mapa e Campos -->
             <div class="location-layout">
-              <!-- Coluna do Mapa -->
-              <div class="map-column">
+              <!-- Seção do Mapa -->
+              <div class="map-section">
                 <div class="map-container">
                   <div id="viewDiv" ref="mapViewDiv" class="map-view"></div>
                   
@@ -162,14 +162,10 @@
                 </div>
               </div>
 
-              <!-- Coluna de Endereço -->
-              <div class="address-column">
+              <!-- Seção de Informações -->
+              <div class="info-section">
                 <!-- Card de Coordenadas -->
-                <div class="address-card coordinates-card">
-                  <div class="card-header">
-                    <v-icon icon="mdi-crosshairs-gps" color="primary" size="24" />
-                    <h3>Coordenadas do Local</h3>
-                  </div>
+                <div class="coordinates-section">
                   <div class="coordinates-grid">
                     <div class="coordinate-box">
                       <div class="coordinate-content">
@@ -199,135 +195,136 @@
                 </div>
 
                 <!-- Card de Endereço -->
-                <div class="address-card">
-                  <div class="card-header">
-                    <v-icon icon="mdi-map-marker" color="primary" size="24" />
-                    <h3>Endereço do Local</h3>
-                  </div>
-                  
+                <div class="address-section">
                   <div class="address-fields">
-                    <div class="field-group">
-                      <v-text-field
-                        v-model="formData.zipCode"
-                        label="CEP*"
-                        placeholder="00000-000"
-                        variant="outlined"
-                        :error-messages="errors.zipCode"
-                        @blur="handleCepBlur"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-mailbox" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </div>
+                    <v-row>
+                      <v-col cols="12" md="3">
+                        <v-text-field
+                          v-model="formData.zipCode"
+                          label="CEP*"
+                          placeholder="00000-000"
+                          variant="outlined"
+                          :error-messages="errors.zipCode"
+                          @blur="handleCepBlur"
+                          class="modern-input"
+                          density="comfortable"
+                          hide-details
+                        >
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-mailbox" color="primary" />
+                          </template>
+                        </v-text-field>
+                      </v-col>
 
-                    <div class="field-group">
-                      <v-text-field
-                        v-model="formData.street"
-                        label="Logradouro*"
-                        placeholder="Nome da rua, avenida, etc"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-road-variant" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </div>
+                      <v-col cols="12" md="7">
+                        <v-text-field
+                          v-model="formData.street"
+                          label="Logradouro*"
+                          placeholder="Nome da rua, avenida, etc"
+                          variant="outlined"
+                          :readonly="isLoadingAddress"
+                          :loading="isLoadingAddress"
+                          @update:model-value="updateMapFromForm"
+                          class="modern-input"
+                          density="comfortable"
+                          hide-details
+                        >
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-road-variant" color="primary" />
+                          </template>
+                        </v-text-field>
+                      </v-col>
 
-                    <div class="field-row">
-                      <v-text-field
-                        v-model="formData.number"
-                        label="Número*"
-                        placeholder="Nº"
-                        variant="outlined"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input number-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-pound" color="primary" />
-                        </template>
-                      </v-text-field>
+                      <v-col cols="12" md="2">
+                        <v-text-field
+                          v-model="formData.number"
+                          label="Número*"
+                          placeholder="Nº"
+                          variant="outlined"
+                          @update:model-value="updateMapFromForm"
+                          class="modern-input"
+                          density="comfortable"
+                          hide-details
+                        >
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-pound" color="primary" />
+                          </template>
+                        </v-text-field>
+                      </v-col>
 
-                      <v-text-field
-                        v-model="formData.complement"
-                        label="Complemento"
-                        placeholder="Apto, Sala, etc"
-                        variant="outlined"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-office-building-marker" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </div>
+                      <v-col cols="12" md="4">
+                        <v-text-field
+                          v-model="formData.complement"
+                          label="Complemento"
+                          placeholder="Apto, Sala, etc"
+                          variant="outlined"
+                          class="modern-input"
+                          density="comfortable"
+                          hide-details
+                        >
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-office-building-marker" color="primary" />
+                          </template>
+                        </v-text-field>
+                      </v-col>
 
-                    <div class="field-group">
-                      <v-text-field
-                        v-model="formData.neighborhood"
-                        label="Bairro*"
-                        placeholder="Nome do bairro"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-home-group" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </div>
+                      <v-col cols="12" md="8">
+                        <v-text-field
+                          v-model="formData.neighborhood"
+                          label="Bairro*"
+                          placeholder="Nome do bairro"
+                          variant="outlined"
+                          :readonly="isLoadingAddress"
+                          :loading="isLoadingAddress"
+                          @update:model-value="updateMapFromForm"
+                          class="modern-input"
+                          density="comfortable"
+                          hide-details
+                        >
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-home-group" color="primary" />
+                          </template>
+                        </v-text-field>
+                      </v-col>
 
-                    <div class="field-row">
-                      <v-text-field
-                        v-model="formData.city"
-                        label="Cidade*"
-                        placeholder="Nome da cidade"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-city-variant" color="primary" />
-                        </template>
-                      </v-text-field>
+                      <v-col cols="12" md="8">
+                        <v-text-field
+                          v-model="formData.city"
+                          label="Cidade*"
+                          placeholder="Nome da cidade"
+                          variant="outlined"
+                          :readonly="isLoadingAddress"
+                          :loading="isLoadingAddress"
+                          @update:model-value="updateMapFromForm"
+                          class="modern-input"
+                          density="comfortable"
+                          hide-details
+                        >
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-city-variant" color="primary" />
+                          </template>
+                        </v-text-field>
+                      </v-col>
 
-                      <v-text-field
-                        v-model="formData.state"
-                        label="UF*"
-                        placeholder="UF"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input state-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-map" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </div>
+                      <v-col cols="12" md="4">
+                        <v-text-field
+                          v-model="formData.state"
+                          label="UF*"
+                          placeholder="UF"
+                          variant="outlined"
+                          :readonly="isLoadingAddress"
+                          :loading="isLoadingAddress"
+                          @update:model-value="updateMapFromForm"
+                          class="modern-input"
+                          density="comfortable"
+                          hide-details
+                        >
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-map" color="primary" />
+                          </template>
+                        </v-text-field>
+                      </v-col>
+                    </v-row>
                   </div>
                 </div>
               </div>
@@ -372,6 +369,7 @@ let view: any = null
 let searchWidget: any = null
 let pointGraphic: any = null
 let graphicsLayer: any = null
+let markerSymbol: any = null
 
 // Removendo temporariamente a proteção da rota para teste
 // if (!userStore.currentUser?.id) {
@@ -438,14 +436,8 @@ onMounted(async () => {
         center: [-53.2316, -10.2491]
       })
 
-      // Cria o marcador inicial
-      const point = {
-        type: "point",
-        longitude: -53.2316,
-        latitude: -10.2491
-      }
-
-      const markerSymbol = {
+      // Configuração inicial do marcador
+      markerSymbol = {
         type: "picture-marker",
         url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
           <svg width="32" height="48" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
@@ -462,53 +454,29 @@ onMounted(async () => {
         yoffset: "24px"
       }
 
-      pointGraphic = new Graphic({
-        geometry: point,
-        symbol: markerSymbol
-      })
-
-      graphicsLayer.add(pointGraphic)
-
-      // Adiciona evento de clique no mapa
-      view.on("click", async (event: any) => {
-        // Obtém as coordenadas do clique
-        const { latitude, longitude } = event.mapPoint
-
-        // Atualiza as coordenadas no formulário
-        formData.latitude = latitude
-        formData.longitude = longitude
-
-        // Atualiza a posição do marcador
+      // Se já tiver coordenadas, posiciona o pin
+      if (formData.latitude && formData.longitude) {
         const point = {
           type: "point",
-          longitude,
-          latitude
+          longitude: formData.longitude,
+          latitude: formData.latitude
         }
 
-        // Remove o marcador antigo e adiciona o novo
-        graphicsLayer.removeAll()
         pointGraphic = new Graphic({
           geometry: point,
           symbol: markerSymbol
         })
-        graphicsLayer.add(pointGraphic)
-        animateMarkerDrop(pointGraphic)
 
-        // Busca o endereço das coordenadas
-        try {
-          const details = await reverseGeocodeWithNominatim(latitude, longitude)
-          if (details && details.address) {
-            formData.street = details.address.road || details.address.street || ''
-            formData.number = details.address.house_number || ''
-            formData.neighborhood = details.address.suburb || details.address.neighbourhood || ''
-            formData.city = details.address.city || details.address.town || details.address.municipality || ''
-            formData.state = details.address.state || ''
-            formData.zipCode = details.address.postcode || ''
-          }
-        } catch (error) {
-          console.error('Erro ao buscar endereço:', error)
-        }
-      })
+        graphicsLayer.add(pointGraphic)
+
+        view.goTo({
+          target: point,
+          zoom: 18
+        })
+      }
+
+      // Configura o evento de clique
+      setupMapClickEvent()
 
       view.when(() => {
         console.log("Mapa carregado com sucesso!")
@@ -607,19 +575,77 @@ const updateFormAddress = (attributes: any) => {
 }
 
 // Função para atualizar o mapa quando os campos são preenchidos manualmente
-const updateMapFromForm = () => {
-  if (!searchWidget) return
+const updateMapFromForm = async () => {
+  if (!view || !pointGraphic) return
 
-  const fullAddress = [
-    formData.street,
-    formData.number,
-    formData.neighborhood,
-    formData.city,
-    formData.state
-  ].filter(Boolean).join(', ')
+  try {
+    // Monta o endereço completo
+    const fullAddress = [
+      formData.street,
+      formData.number,
+      formData.neighborhood,
+      formData.city,
+      formData.state
+    ].filter(Boolean).join(', ')
 
-  if (fullAddress) {
-    searchWidget.search(fullAddress)
+    if (!fullAddress) return
+
+    // Busca as coordenadas do endereço
+    const params = new URLSearchParams({
+      q: fullAddress + ', Brasil',
+      format: 'json',
+      limit: '1',
+      addressdetails: '1',
+      'accept-language': 'pt-BR'
+    })
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params}`,
+      {
+        headers: {
+          'Accept-Language': 'pt-BR'
+        }
+      }
+    )
+
+    const data = await response.json()
+
+    if (data && data[0]) {
+      const lat = parseFloat(data[0].lat)
+      const lon = parseFloat(data[0].lon)
+
+      // Atualiza as coordenadas no formulário
+      formData.latitude = lat
+      formData.longitude = lon
+
+      // Atualiza o pin no mapa
+      const point = {
+        type: "point",
+        longitude: lon,
+        latitude: lat
+      }
+
+      // Remove o pin antigo e adiciona o novo
+      graphicsLayer.removeAll()
+      pointGraphic = new Graphic({
+        geometry: point,
+        symbol: markerSymbol
+      })
+      graphicsLayer.add(pointGraphic)
+
+      // Centraliza o mapa na nova posição
+      view.goTo({
+        target: point,
+        zoom: 18
+      }, {
+        duration: 500,
+        easing: 'ease-out'
+      }).then(() => {
+        animateMarkerDrop(pointGraphic)
+      })
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar mapa:', error)
   }
 }
 
@@ -657,7 +683,7 @@ const handleCnpjBlur = async () => {
     errors.cnpj = ''
 
     // Atualiza o mapa com o novo endereço
-    updateMapFromForm()
+    await updateMapFromForm()
   } catch (error: any) {
     errors.cnpj = error.message || 'CNPJ não encontrado ou inválido'
     console.error('Erro ao buscar CNPJ:', error)
@@ -694,7 +720,7 @@ const handleCepBlur = async () => {
     errors.zipCode = ''
 
     // Atualiza o mapa com o novo endereço
-    updateMapFromForm()
+    await updateMapFromForm()
   } catch (error: any) {
     errors.zipCode = 'CEP não encontrado'
     console.error('Erro ao buscar CEP:', error)
@@ -712,10 +738,22 @@ watch(
     () => formData.city,
     () => formData.state
   ],
-  () => {
-    // Só atualiza o mapa se a mudança não veio do próprio mapa
+  async () => {
     if (!isLoadingAddress.value) {
-      updateMapFromForm()
+      await updateMapFromForm()
+    }
+  }
+)
+
+// Watch para coordenadas
+watch(
+  [
+    () => formData.latitude,
+    () => formData.longitude
+  ],
+  async ([newLat, newLon]) => {
+    if (newLat && newLon && !isLoadingAddress.value) {
+      await reverseGeocodeWithNominatim(newLat, newLon)
     }
   }
 )
@@ -777,60 +815,41 @@ const handleSearchInput = async () => {
 // Função para selecionar um resultado da busca
 const selectSearchResult = async (result: any) => {
   try {
-    // Atualiza as coordenadas com precisão
     const lat = parseFloat(result.lat)
     const lon = parseFloat(result.lon)
     
     formData.latitude = lat
     formData.longitude = lon
 
-    // Atualiza o mapa com a posição exata
     if (view && pointGraphic) {
       const point = {
         type: "point",
         longitude: lon,
-        latitude: lat,
-        spatialReference: {
-          wkid: 4326
-        }
+        latitude: lat
       }
-      
-      // Atualiza a geometria do ponto
-      pointGraphic.geometry = point
 
-      // Centraliza o mapa na posição exata
+      // Remove o marcador antigo e adiciona o novo
+      graphicsLayer.removeAll()
+      pointGraphic = new Graphic({
+        geometry: point,
+        symbol: markerSymbol
+      })
+      graphicsLayer.add(pointGraphic)
+
+      // Centraliza o mapa na nova posição
       view.goTo({
         target: point,
-        zoom: 18,
-        rotation: 0
+        zoom: 18
       }, {
-        duration: 1000,
+        duration: 500,
         easing: 'ease-out'
       }).then(() => {
-        // Garante que o pin está na posição correta após a animação
-        pointGraphic.geometry = point
+        // Anima o pin após centralizar
+        animateMarkerDrop(pointGraphic)
       })
-
-      // Atualiza o símbolo do marcador para garantir o offset correto
-      pointGraphic.symbol = {
-        type: "picture-marker",
-        url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-          <svg width="32" height="48" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
-            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feOffset result="offOut" in="SourceAlpha" dx="0" dy="2" />
-              <feGaussianBlur result="blurOut" in="offOut" stdDeviation="2" />
-              <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
-            </filter>
-            <path fill="#5B21B6" filter="url(#shadow)" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
-          </svg>
-        `),
-        width: "32px",
-        height: "48px",
-        yoffset: "24px" // Ajusta o offset para o pin ficar exatamente na posição
-      }
     }
 
-    // Preenche os campos do formulário com os dados do resultado
+    // Preenche os campos do formulário
     if (result.address) {
       formData.street = result.address.road || result.address.street || ''
       formData.number = result.address.house_number || ''
@@ -996,14 +1015,8 @@ const searchResultTemplate = `
   </div>
 `
 
-// Função para buscar endereço por coordenadas usando OpenStreetMap (Nominatim)
+// Função para buscar endereço por coordenadas
 const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
-  // Verifica se as coordenadas estão dentro do Brasil
-  if (lat < -35.0 || lat > 5.0 || lon < -75.0 || lon > -30.0) {
-    console.error('Coordenadas fora do território brasileiro')
-    return null
-  }
-
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?` +
@@ -1013,8 +1026,7 @@ const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
         format: 'json',
         zoom: '18',
         addressdetails: '1',
-        'accept-language': 'pt-BR',
-        countrycodes: 'br'
+        'accept-language': 'pt-BR'
       }),
       {
         headers: {
@@ -1022,14 +1034,23 @@ const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
         }
       }
     )
+
+    if (!response.ok) {
+      throw new Error('Erro na geocodificação reversa')
+    }
+
     const data = await response.json()
     
-    // Verifica se o resultado é do Brasil
-    if (data.address?.country_code !== 'br') {
-      console.error('Endereço fora do Brasil')
-      return null
+    // Atualiza o formulário com os dados do endereço
+    if (data.address) {
+      formData.street = data.address.road || data.address.street || ''
+      formData.number = data.address.house_number || ''
+      formData.neighborhood = data.address.suburb || data.address.neighbourhood || ''
+      formData.city = data.address.city || data.address.town || data.address.municipality || ''
+      formData.state = data.address.state || ''
+      formData.zipCode = data.address.postcode || ''
     }
-    
+
     return data
   } catch (error) {
     console.error('Erro na geocodificação reversa:', error)
@@ -1047,31 +1068,38 @@ const getCurrentLocation = () => {
       async (position) => {
         const { latitude, longitude } = position.coords
         
-        // Atualiza as coordenadas
         formData.latitude = latitude
         formData.longitude = longitude
 
-        // Atualiza o mapa
         if (view && pointGraphic) {
           const point = {
             type: "point",
             longitude,
             latitude
           }
-          
-          pointGraphic.geometry = point
-          animateMarkerDrop(pointGraphic)
-          
+
+          // Remove o marcador antigo e adiciona o novo
+          graphicsLayer.removeAll()
+          pointGraphic = new Graphic({
+            geometry: point,
+            symbol: markerSymbol
+          })
+          graphicsLayer.add(pointGraphic)
+
+          // Centraliza o mapa na nova posição
           view.goTo({
             target: point,
             zoom: 18
           }, {
-            duration: 1000,
+            duration: 500,
             easing: 'ease-out'
+          }).then(() => {
+            // Anima o pin após centralizar
+            animateMarkerDrop(pointGraphic)
           })
         }
 
-        // Busca o endereço usando OpenStreetMap
+        // Busca o endereço
         try {
           const details = await reverseGeocodeWithNominatim(latitude, longitude)
           if (details && details.address) {
@@ -1095,30 +1123,74 @@ const getCurrentLocation = () => {
     )
   }
 }
+
+// Atualiza o evento de clique no mapa
+const setupMapClickEvent = () => {
+  if (!view) return
+
+  view.on("click", async (event: any) => {
+    const { latitude, longitude } = event.mapPoint
+
+    // Atualiza as coordenadas no formulário
+    formData.latitude = latitude
+    formData.longitude = longitude
+
+    // Atualiza o pin no mapa
+    const point = {
+      type: "point",
+      longitude,
+      latitude
+    }
+
+    // Remove o pin antigo e adiciona o novo
+    graphicsLayer.removeAll()
+    pointGraphic = new Graphic({
+      geometry: point,
+      symbol: markerSymbol
+    })
+    graphicsLayer.add(pointGraphic)
+
+    // Centraliza o mapa na nova posição
+    view.goTo({
+      target: point,
+      zoom: 18
+    }, {
+      duration: 500,
+      easing: 'ease-out'
+    }).then(() => {
+      animateMarkerDrop(pointGraphic)
+    })
+
+    // Busca o endereço das coordenadas
+    await reverseGeocodeWithNominatim(latitude, longitude)
+  })
+}
 </script>
 
 <style scoped>
+/* Reset e Base */
 .complete-profile-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #e5e9ff 100%);
   padding: 2rem;
 }
 
 .form-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  border-radius: 32px;
+  box-shadow: 0 20px 50px -10px rgba(51, 65, 85, 0.15);
   overflow: hidden;
 }
 
-/* Header Animado */
+/* Header Animado Melhorado */
 .form-header {
   position: relative;
-  padding: 4rem 2rem;
+  padding: 5rem 2rem;
   text-align: center;
   overflow: hidden;
+  margin-bottom: 2rem;
 }
 
 .header-content {
@@ -1132,10 +1204,17 @@ const getCurrentLocation = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, #4f46e5, #7c3aed, #2563eb);
-  background-size: 200% 200%;
+  background: linear-gradient(45deg, 
+    #4f46e5 0%, 
+    #7c3aed 25%, 
+    #2563eb 50%, 
+    #7c3aed 75%, 
+    #4f46e5 100%
+  );
+  background-size: 400% 400%;
   animation: gradientAnimation 15s ease infinite;
   z-index: 1;
+  opacity: 0.95;
 }
 
 @keyframes gradientAnimation {
@@ -1145,267 +1224,334 @@ const getCurrentLocation = () => {
 }
 
 .logo-container {
-  background: white;
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  width: 100px;
+  height: 100px;
+  border-radius: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 2rem;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  transform: perspective(1000px) rotateX(10deg);
+  transition: all 0.3s ease;
+}
+
+.logo-container:hover {
+  transform: perspective(1000px) rotateX(0deg) translateY(-5px);
+  box-shadow: 0 20px 32px rgba(0, 0, 0, 0.2);
 }
 
 .logo {
-  height: 40px;
+  height: 50px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .title {
   color: white;
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 800;
   margin-bottom: 1rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.25rem;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Cards do Formulário */
 .form-content {
-  padding: 2rem;
+  padding: 0 2rem 2rem;
 }
 
 .form-card {
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 2.5rem;
+  margin-bottom: 2.5rem;
+  transition: all 0.3s ease;
+}
+
+.form-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
 }
 
 .header-icon {
-  background: #f0f9ff;
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .header-text h2 {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.header-text p {
+  color: #64748b;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+/* Mapa e Layout de Localização */
+.map-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.map-card .card-header {
+  padding: 2.5rem 2.5rem 0;
+  margin-bottom: 2rem;
+}
+
+.location-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.map-section {
+  width: 100%;
+  height: 500px;
+  position: relative;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+  background: #f8fafc;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.map-view {
+  width: 100%;
+  height: 100%;
+}
+
+/* Barra de Pesquisa Aprimorada */
+.custom-search-container {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  max-width: 600px;
+  z-index: 20;
+}
+
+.search-wrapper {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+}
+
+.search-wrapper:hover,
+.search-wrapper:focus-within {
+  background: white;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 1.1rem;
+  color: #1e293b;
+  background: transparent;
+  padding: 0.5rem;
+}
+
+/* Resultados da Busca */
+.search-results {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.search-result-item:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+}
+
+.result-content {
+  flex: 1;
+}
+
+.result-title {
+  font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 0.25rem;
 }
 
-.header-text p {
-  color: #64748b;
-  font-size: 1rem;
-}
-
-/* Inputs Modernos */
-.input-group {
-  margin-bottom: 1rem;
-}
-
-.input-label {
-  display: block;
+.result-subtitle {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #475569;
-  margin-bottom: 0.5rem;
+  color: #64748b;
 }
 
-.modern-input {
-  border-radius: 12px !important;
-}
-
-:deep(.v-field) {
-  border-radius: 12px !important;
-  transition: all 0.2s ease;
-}
-
-:deep(.v-field--variant-outlined) {
-  border: 1px solid #e2e8f0 !important;
-  background: #f8fafc !important;
-}
-
-:deep(.v-field--variant-outlined:hover) {
-  border-color: #6366f1 !important;
-}
-
-:deep(.v-field--focused) {
-  border-color: #6366f1 !important;
-  background: white !important;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
-}
-
-/* Layout do Mapa e Campos */
-.location-layout {
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 2rem;
-  margin-top: 1.5rem;
-}
-
-/* Coluna do Mapa */
-.map-column {
-  min-height: 600px;
-}
-
-/* Coluna de Endereço */
-.address-column {
+/* Seção de Informações */
+.info-section {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.address-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-}
-
-.coordinates-card {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.card-header h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
+  gap: 2rem;
 }
 
 /* Coordenadas */
+.coordinates-section {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
 .coordinates-grid {
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
 
 .coordinate-box {
-  background: white;
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.coordinate-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .coordinate-content {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.375rem;
 }
 
 .coordinate-label {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: #64748b;
   font-weight: 500;
 }
 
 .coordinate-value {
   font-family: 'Roboto Mono', monospace;
-  font-size: 1rem;
+  font-size: 1.125rem;
   color: #1e293b;
   font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
-/* Campos de Endereço */
+/* Endereço */
+.address-section {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
 .address-fields {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.field-group {
-  width: 100%;
-}
-
-.field-row {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 1rem;
-}
-
-.number-input {
-  width: 120px;
-}
-
-.state-input {
-  width: 120px;
-}
-
-/* Responsividade */
-@media (max-width: 1200px) {
-  .location-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .map-column {
-    min-height: 400px;
-  }
-
-  .field-row {
-    grid-template-columns: 1fr;
-  }
-
-  .number-input,
-  .state-input {
-    width: 100%;
-  }
-}
-
-/* Melhorias nos campos */
+/* Inputs Modernos */
 :deep(.v-field) {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
   background: white !important;
   transition: all 0.2s ease;
 }
 
 :deep(.v-field--variant-outlined) {
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  background: #f8fafc !important;
 }
 
 :deep(.v-field--variant-outlined:hover) {
   border-color: #6366f1 !important;
+  background: white !important;
 }
 
 :deep(.v-field--focused) {
   border-color: #6366f1 !important;
+  background: white !important;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
 }
 
 :deep(.v-field__input) {
-  font-size: 0.875rem !important;
-  padding: 12px !important;
+  font-size: 1rem !important;
+  padding: 16px !important;
 }
 
 :deep(.v-field__prepend-inner) {
-  padding-inline-start: 12px !important;
+  padding-inline-start: 16px !important;
 }
 
 :deep(.v-label) {
@@ -1417,45 +1563,80 @@ const getCurrentLocation = () => {
 /* Botão de Submit */
 .submit-section {
   text-align: center;
-  margin-top: 3rem;
+  margin-top: 4rem;
+  padding-bottom: 2rem;
 }
 
 .submit-button {
-  font-size: 1.125rem !important;
-  padding: 1.5rem 3rem !important;
-  border-radius: 12px !important;
+  font-size: 1.25rem !important;
+  padding: 1.75rem 4rem !important;
+  border-radius: 16px !important;
   text-transform: none !important;
-  letter-spacing: 0 !important;
+  letter-spacing: -0.5px !important;
   font-weight: 600 !important;
-  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3) !important;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.4) !important;
   transition: all 0.3s ease !important;
 }
 
 .submit-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 20px -3px rgba(99, 102, 241, 0.4) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 20px 32px -8px rgba(99, 102, 241, 0.5) !important;
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
 }
 
-/* Estilos do Mapa */
-.map-container {
-  position: relative;
-  height: 100%;
-  min-height: 600px;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  background: #f8fafc;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+/* Responsividade */
+@media (max-width: 1200px) {
+  .form-container {
+    margin: 1rem;
+  }
+
+  .map-section {
+    height: 500px;
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .header-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .form-card {
+    padding: 2rem;
+  }
 }
 
-.map-view {
-  width: 100%;
-  height: 100%;
-  min-height: 600px;
-  background: #f8fafc;
+@media (max-width: 768px) {
+  .complete-profile-page {
+    padding: 1rem;
+  }
+
+  .form-container {
+    margin: 0;
+  }
+
+  .map-section {
+    height: 400px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .submit-button {
+    width: 100%;
+    padding: 1.5rem !important;
+  }
+
+  .coordinates-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* ESRI Map Overrides - Importante para o mapa aparecer */
+/* ESRI Map Overrides */
 :deep(.esri-view) {
   width: 100%;
   height: 100%;
@@ -1474,143 +1655,40 @@ const getCurrentLocation = () => {
 }
 
 :deep(.esri-zoom) {
-  margin: 12px !important;
+  margin: 16px !important;
 }
 
-/* Barra de Pesquisa Personalizada */
-.custom-search-container {
+/* Botão de Localização */
+.custom-locate-btn {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  max-width: 500px;
-  z-index: 20;
-}
-
-.search-wrapper {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border-radius: 16px;
-  padding: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  transition: all 0.3s ease;
-}
-
-.search-wrapper:hover,
-.search-wrapper:focus-within {
+  bottom: 24px;
+  right: 24px;
   background: white;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.search-input {
-  border: none;
-  outline: none;
-  width: 100%;
-  font-size: 1rem;
-  color: #1e293b;
-  background: transparent;
-  padding: 0.5rem;
-}
-
-.search-input::placeholder {
-  color: #94a3b8;
-}
-
-/* Resultados da Busca */
-.search-results {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 30;
-}
-
-.search-result-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.search-result-item:last-child {
-  border-bottom: none;
-}
-
-.search-result-item:hover {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.result-icon {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: rgba(99, 102, 241, 0.1);
-  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  z-index: 20;
 }
 
-.result-content {
-  flex: 1;
-  overflow: hidden;
+.custom-locate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
 }
 
-.result-title {
-  font-size: 0.875rem;
-  color: #1e293b;
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.custom-locate-btn.loading {
+  animation: pulse 1.5s infinite;
 }
 
-.result-subtitle {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-top: 0.25rem;
-}
-
-/* Animações */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.search-results {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Scrollbar personalizada */
-.search-results::-webkit-scrollbar {
-  width: 8px;
-}
-
-.search-results::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-}
-
-.search-results::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 4px;
-}
-
-.search-results::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 </style> 
