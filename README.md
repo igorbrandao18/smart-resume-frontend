@@ -125,10 +125,6 @@ O aplicativo é totalmente responsivo e otimizado para:
 - Tokens JWT
 - Refresh tokens
 
-## 📝 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
 ## 👥 Autor
 
 - **Igor Brandão** - *Desenvolvimento Full Stack* - [@igorbrandao18](https://github.com/igorbrandao18)
