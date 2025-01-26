@@ -571,53 +571,14 @@ onMounted(async () => {
           try {
             const { latitude, longitude } = event.mapPoint
             
-            // Remove pins existentes
-            graphicsLayer.removeAll()
-
-            // Cria o ponto
-            const point = {
-              type: "point",
-              longitude,
-              latitude,
-              spatialReference: { wkid: 4326 }
-            }
-
-            // Cria o símbolo do pin
-            const markerSymbol = {
-              type: "simple-marker",
-              style: "circle",
-              color: [91, 33, 182],
-              outline: {
-                color: [255, 255, 255],
-                width: 2
-              },
-              size: "20px"
-            }
-
-            // Cria o pin
-            const pinGraphic = new Graphic({
-              geometry: point,
-              symbol: markerSymbol
-            })
-
-            // Adiciona o pin
-            graphicsLayer.add(pinGraphic)
-
             // Atualiza as coordenadas no formulário
             formData.latitude = latitude
             formData.longitude = longitude
+            
+            // Adiciona o pin na localização atual
+            addPinToMap(latitude, longitude)
 
-            // Centraliza o mapa na nova posição com animação suave
-            view.goTo({
-              target: event.mapPoint,
-              zoom: view.zoom, // Mantém o zoom atual
-              center: [longitude, latitude] // Centraliza exatamente onde clicou
-            }, {
-              duration: 500, // Animação mais rápida
-              easing: "ease-in-out"
-            })
-
-            // Busca o endereço das coordenadas
+            // Busca o endereço
             await reverseGeocodeWithNominatim(latitude, longitude)
           } catch (error) {
             console.error('Erro ao processar clique no mapa:', error)
@@ -1245,18 +1206,32 @@ const getCurrentLocation = () => {
     isLocating.value = true
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude } = position.coords
-        
-        // Adiciona o pin na localização atual
-        addPinToMap(latitude, longitude)
+        try {
+          const { latitude, longitude } = position.coords
+          
+          // Atualiza as coordenadas no formulário
+          formData.latitude = latitude
+          formData.longitude = longitude
+          
+          // Adiciona o pin na localização atual (isso já remove pins existentes)
+          addPinToMap(latitude, longitude)
 
-        // Busca o endereço
-        await reverseGeocodeWithNominatim(latitude, longitude)
-        isLocating.value = false
+          // Busca o endereço
+          await reverseGeocodeWithNominatim(latitude, longitude)
+        } catch (error) {
+          console.error('Erro ao processar localização:', error)
+        } finally {
+          isLocating.value = false
+        }
       },
       (error) => {
         console.error('Erro ao obter localização:', error)
         isLocating.value = false
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
       }
     )
   }
