@@ -494,7 +494,7 @@ const addPinToMap = (latitude: number, longitude: number) => {
     // Centraliza o mapa na nova posição
     mapState.view.goTo({
       target: point,
-      zoom: 19,
+      zoom: 21,  // Aumentando zoom do pin
       tilt: 0,
       rotation: 0
     }, {
@@ -529,12 +529,16 @@ onMounted(async () => {
 
   script.onload = () => {
     (window as any).require([
+      "esri/config",
       "esri/Map",
       "esri/views/MapView",
       "esri/Graphic",
       "esri/layers/GraphicsLayer"
-    ], function(Map: any, MapView: any, Graphic: any, GraphicsLayer: any) {
+    ], function(esriConfig: any, Map: any, MapView: any, Graphic: any, GraphicsLayer: any) {
       try {
+        // Configura a API key
+        esriConfig.apiKey = "AAPT3NKHt6i2urmWtqOuugvr9dU54lMiXG_7Pdh38YCF8q4ByuTuY9Cj7w0vtlZhj4HO9VMrZko3PvEm9Kw33ZRv8I0CtSyjX6FgTtE05oFtxkePOOVYt7PYSE_I5BKuhNzgBwgiohDiq3bzd7saOmejK18RMz0D2aWl1JrguDruoU2FeROB_c55C6HToG_I6D-y2Q5JNjOoNqFXV0_0LkCNqMZMLtxMMH9Q2bioGnr0oy8";
+
         // Cria o mapa base
         const map = new Map({
           basemap: 'arcgis/navigation'
@@ -548,12 +552,12 @@ onMounted(async () => {
         const view = new MapView({
           container: "viewDiv",
           map: map,
-          zoom: 4,
+          zoom: 5,  // Aumentando zoom inicial
           center: [-53.2316, -10.2491], // Centro do Brasil
           constraints: {
             rotationEnabled: false,
             minZoom: 4,
-            maxZoom: 20
+            maxZoom: 22  // Aumentando zoom máximo
           }
         })
 
