@@ -1263,31 +1263,38 @@ const getCurrentLocation = () => {
 /* Coordenadas */
 .coordinates-display {
   position: absolute;
-  top: 16px;
+  bottom: 24px;
   left: 16px;
-  right: 16px;
+  right: 80px;
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
+  justify-content: center;
+  gap: 3rem;
+  height: 44px;
+  padding: 0 1rem;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 10;
+  align-items: center;
 }
 
 .coordinate-item {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
+  height: 100%;
+  flex: 1;
+  line-height: 1;
 }
 
 .coordinate-label {
   font-size: 0.875rem;
   color: #64748b;
   font-weight: 500;
+  margin-top: 1px;
 }
 
 .coordinate-value {
@@ -1295,6 +1302,13 @@ const getCurrentLocation = () => {
   font-size: 0.9375rem;
   color: #1e293b;
   font-weight: 600;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* Ajuste do ícone */
+:deep(.v-icon) {
+  margin-top: 1px;
 }
 
 /* Seção de Campos */
@@ -1379,7 +1393,7 @@ const getCurrentLocation = () => {
 .custom-locate-btn {
   position: absolute;
   bottom: 24px;
-  right: 24px;
+  right: 16px;
   background: white;
   border-radius: 12px;
   width: 44px;
@@ -1407,5 +1421,20 @@ const getCurrentLocation = () => {
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
+}
+
+/* Responsividade para as coordenadas */
+@media (max-width: 768px) {
+  .coordinates-display {
+    height: auto;
+    padding: 0.5rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    right: 72px;
+  }
+
+  .coordinate-item {
+    justify-content: flex-start;
+  }
 }
 </style> 
