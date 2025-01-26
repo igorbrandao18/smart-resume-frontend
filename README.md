@@ -1,61 +1,138 @@
-# smart-resume-frontend
+# Smart Resume Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Um aplicativo web moderno desenvolvido com Vue 3 + TypeScript para gerenciamento de perfis profissionais, com funcionalidades avançadas de geolocalização usando ArcGIS.
 
-## Recommended IDE Setup
+Desenvolvido por Igor Brandão.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 🚀 Tecnologias Utilizadas
 
-## Type Support for `.vue` Imports in TS
+- **Vue 3** - Framework JavaScript progressivo
+- **TypeScript** - Adiciona tipagem estática ao JavaScript
+- **Vite** - Build tool e dev server
+- **Vuetify** - Framework de componentes UI
+- **ArcGIS API** - Para funcionalidades de mapa e geolocalização
+- **Pinia** - Gerenciamento de estado
+- **Vue Router** - Roteamento da aplicação
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## 🛠️ Configuração do Ambiente
 
-## Customize configuration
+### Pré-requisitos
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+- Node.js (versão 16 ou superior)
+- pnpm (gerenciador de pacotes)
 
-## Project Setup
+### Variáveis de Ambiente
 
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```env
+VITE_PORT=5173
+VITE_BASE_URL=/
+VITE_ARCGIS_API_KEY=sua_api_key_aqui
+```
+
+### Instalação
+
+1. Clone o repositório:
+```sh
+git clone https://github.com/igorbrandao18/smart-resume-frontend.git
+cd smart-resume-frontend
+```
+
+2. Instale as dependências:
 ```sh
 pnpm install
 ```
 
-### Compile and Hot-Reload for Development
-
+3. Inicie o servidor de desenvolvimento:
 ```sh
 pnpm dev
 ```
 
-### Type-Check, Compile and Minify for Production
+O aplicativo estará disponível em `http://localhost:5173`
+
+## 📦 Build para Produção
+
+Para criar uma build otimizada para produção:
 
 ```sh
 pnpm build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+## 🧪 Testes
 
+### Testes Unitários
 ```sh
 pnpm test:unit
 ```
 
-### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
-
+### Testes E2E
 ```sh
+# Desenvolvimento
 pnpm test:e2e:dev
-```
 
-This runs the end-to-end tests against the Vite development server.
-It is much faster than the production build.
-
-But it's still recommended to test the production build with `test:e2e` before deploying (e.g. in CI environments):
-
-```sh
-pnpm build
+# Produção
 pnpm test:e2e
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+## 🔍 Linting
+
+Para verificar e corrigir problemas de código:
 
 ```sh
 pnpm lint
 ```
+
+## 🌟 Funcionalidades
+
+- **Autenticação de Usuário**
+  - Login/Registro
+  - Verificação de email
+  - Recuperação de senha
+
+- **Perfil Completo**
+  - Informações da instituição
+  - Geolocalização com ArcGIS
+  - Busca e validação de CNPJ
+  - Autopreenchimento de endereço via CEP
+
+- **Mapa Interativo**
+  - Seleção de localização por clique
+  - Busca de endereço
+  - Geolocalização automática
+  - Animações suaves de pin
+  - Zoom automático
+
+## 🎨 Design
+
+- Interface moderna e responsiva
+- Animações suaves
+- Temas claros/escuros
+- Componentes Vuetify personalizados
+
+## 📱 Responsividade
+
+O aplicativo é totalmente responsivo e otimizado para:
+- Desktops
+- Tablets
+- Smartphones
+
+## 🔒 Segurança
+
+- Validação de dados
+- Proteção contra XSS
+- Sanitização de inputs
+- Tokens JWT
+- Refresh tokens
+
+## 📝 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 👥 Autor
+
+- **Igor Brandão** - *Desenvolvimento Full Stack* - [@igorbrandao18](https://github.com/igorbrandao18)
+
+## 📞 Suporte
+
+Para suporte, abra uma issue no repositório: https://github.com/igorbrandao/smart-resume-frontend
