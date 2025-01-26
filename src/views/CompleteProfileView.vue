@@ -494,7 +494,7 @@ const addPinToMap = (latitude: number, longitude: number) => {
     // Centraliza o mapa na nova posição
     mapState.view.goTo({
       target: point,
-      zoom: 21,  // Aumentando zoom do pin
+      zoom: 21,
       tilt: 0,
       rotation: 0
     }, {
