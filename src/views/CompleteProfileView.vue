@@ -122,7 +122,7 @@
               <!-- Seção do Mapa -->
               <div class="map-section">
                 <div id="viewDiv" ref="mapViewDiv"></div>
-                
+
                 <!-- Botão de Localização -->
                 <div class="custom-locate-btn" @click="getCurrentLocation" :class="{ loading: isLocating }">
                   <v-icon icon="mdi-crosshairs-gps" color="primary" />
@@ -145,18 +145,10 @@
 
               <!-- Seção de Campos -->
               <div class="fields-section">
-                <!-- Campo de Busca -->
-                <div class="search-field">
-                  <LocationSearch
-                    v-model="searchQuery"
-                    @select="selectSearchResult"
-                  />
-                </div>
-
                 <!-- Campos de Endereço -->
                 <div class="address-fields">
                   <v-row>
-                    <v-col cols="12" md="4">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="formData.zipCode"
                         label="CEP*"
@@ -174,7 +166,7 @@
                       </v-text-field>
                     </v-col>
 
-                    <v-col cols="12" md="8">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="formData.street"
                         label="Logradouro*"
@@ -193,7 +185,7 @@
                       </v-text-field>
                     </v-col>
 
-                    <v-col cols="12" md="4">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="formData.number"
                         label="Número*"
@@ -210,7 +202,7 @@
                       </v-text-field>
                     </v-col>
 
-                    <v-col cols="12" md="8">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="formData.complement"
                         label="Complemento"
@@ -226,7 +218,7 @@
                       </v-text-field>
                     </v-col>
 
-                    <v-col cols="12" md="12">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="formData.neighborhood"
                         label="Bairro*"
@@ -245,7 +237,7 @@
                       </v-text-field>
                     </v-col>
 
-                    <v-col cols="12" md="8">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="formData.city"
                         label="Cidade*"
@@ -264,7 +256,7 @@
                       </v-text-field>
                     </v-col>
 
-                    <v-col cols="12" md="4">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="formData.state"
                         label="UF*"
@@ -369,17 +361,15 @@ const mapState = reactive({
 
 // Configuração do marcador
 const createMarkerSymbol = () => ({
-  type: "simple-marker",
-  style: "circle",
-  color: [91, 33, 182], // Cor roxa (primary)
-  outline: {
-    color: [255, 255, 255],
-    width: 2
-  },
-  size: "12px"
+  type: "picture-marker",
+  url: "https://static.arcgis.com/images/Symbols/Basic/RedStickpin.png",
+  width: "32px",
+  height: "32px",
+  xoffset: 0,
+  yoffset: 16
 })
 
-// Função para adicionar pin no mapa
+// Função para adicionar pin no mapa com animação
 const addPinToMap = (latitude: number, longitude: number) => {
   if (!mapState.view || !mapState.graphicsLayer) {
     console.error('Mapa não inicializado')
@@ -398,25 +388,120 @@ const addPinToMap = (latitude: number, longitude: number) => {
     const point = {
       type: "point",
       longitude,
-      latitude
+      latitude,
+      spatialReference: { wkid: 4326 }
     }
 
-    // Cria o pin
+    // Cria o pin com posição inicial acima do ponto
     const pinGraphic = new (window as any).esri.Graphic({
       geometry: point,
-      symbol: createMarkerSymbol()
+      symbol: {
+        type: "picture-marker",
+        url: "https://static.arcgis.com/images/Symbols/Basic/RedStickpin.png",
+        width: "32px",
+        height: "32px",
+        xoffset: 0,
+        yoffset: -100 // Começa acima do ponto para a animação
+      }
     })
 
     // Adiciona o pin
     mapState.graphicsLayer.add(pinGraphic)
 
-    // Centraliza o mapa na nova posição com animação
+    // Cria o efeito de onda (ripple)
+    const rippleGraphic = new (window as any).esri.Graphic({
+      geometry: point,
+      symbol: {
+        type: "simple-marker",
+        style: "circle",
+        color: [99, 102, 241, 0.4],
+        size: "20px",
+        outline: {
+          color: [99, 102, 241, 0.8],
+          width: 2
+        }
+      }
+    })
+
+    // Adiciona o ripple
+    mapState.graphicsLayer.add(rippleGraphic)
+
+    // Anima o ripple
+    const animateRipple = () => {
+      let size = 20
+      let opacity = 0.4
+      
+      const rippleAnimation = setInterval(() => {
+        size += 2
+        opacity -= 0.02
+
+        if (size >= 60 || opacity <= 0) {
+          clearInterval(rippleAnimation)
+          mapState.graphicsLayer.remove(rippleGraphic)
+          return
+        }
+
+        rippleGraphic.symbol = {
+          type: "simple-marker",
+          style: "circle",
+          color: [99, 102, 241, opacity],
+          size: `${size}px`,
+          outline: {
+            color: [99, 102, 241, opacity * 2],
+            width: 2
+          }
+        }
+      }, 16)
+    }
+
+    // Anima a queda do pin
+    const animatePin = () => {
+      let yOffset = -100
+      const targetOffset = 16
+      let velocity = 0
+      const gravity = 1.5
+      const bounce = 0.7
+      
+      const pinAnimation = setInterval(() => {
+        velocity += gravity
+        yOffset += velocity
+
+        if (yOffset >= targetOffset) {
+          yOffset = targetOffset
+          velocity = -velocity * bounce
+
+          if (Math.abs(velocity) < 0.5) {
+            clearInterval(pinAnimation)
+            // Inicia o efeito de onda após o pin pousar
+            animateRipple()
+          }
+        }
+
+        pinGraphic.symbol = {
+          type: "picture-marker",
+          url: "https://static.arcgis.com/images/Symbols/Basic/RedStickpin.png",
+          width: "32px",
+          height: "32px",
+          xoffset: 0,
+          yoffset: yOffset
+        }
+      }, 16)
+    }
+
+    // Inicia a animação do pin
+    animatePin()
+
+    // Centraliza o mapa na nova posição
     mapState.view.goTo({
       target: point,
-      zoom: 18
+      zoom: 19,
+      tilt: 0,
+      rotation: 0
     }, {
-      duration: 500,
+      duration: 1000,
       easing: "ease-out"
+    }).catch((error: any) => {
+      console.error('Erro ao mover o mapa:', error)
     })
 
   } catch (error) {
@@ -452,7 +537,7 @@ onMounted(async () => {
       try {
         // Cria o mapa base
         const map = new Map({
-          basemap: 'osm'
+          basemap: 'arcgis/navigation'
         })
 
         // Cria a camada de gráficos
@@ -468,7 +553,7 @@ onMounted(async () => {
           constraints: {
             rotationEnabled: false,
             minZoom: 4,
-            maxZoom: 18
+            maxZoom: 20
           }
         })
 
@@ -482,9 +567,52 @@ onMounted(async () => {
           try {
             const { latitude, longitude } = event.mapPoint
             
-            // Adiciona o pin e atualiza coordenadas
-            addPinToMap(latitude, longitude)
-            
+            // Remove pins existentes
+            graphicsLayer.removeAll()
+
+            // Cria o ponto
+            const point = {
+              type: "point",
+              longitude,
+              latitude,
+              spatialReference: { wkid: 4326 }
+            }
+
+            // Cria o símbolo do pin
+            const markerSymbol = {
+              type: "simple-marker",
+              style: "circle",
+              color: [91, 33, 182],
+              outline: {
+                color: [255, 255, 255],
+                width: 2
+              },
+              size: "20px"
+            }
+
+            // Cria o pin
+            const pinGraphic = new Graphic({
+              geometry: point,
+              symbol: markerSymbol
+            })
+
+            // Adiciona o pin
+            graphicsLayer.add(pinGraphic)
+
+            // Atualiza as coordenadas no formulário
+            formData.latitude = latitude
+            formData.longitude = longitude
+
+            // Centraliza o mapa na nova posição com animação suave
+            view.goTo({
+              target: event.mapPoint,
+              zoom: view.zoom, // Mantém o zoom atual
+              center: [longitude, latitude] // Centraliza exatamente onde clicou
+            }, {
+              duration: 500, // Animação mais rápida
+              easing: "ease-in-out"
+            })
+
             // Busca o endereço das coordenadas
             await reverseGeocodeWithNominatim(latitude, longitude)
           } catch (error) {
@@ -494,15 +622,36 @@ onMounted(async () => {
 
         // Se já tiver coordenadas salvas, mostra o pin
         if (formData.latitude && formData.longitude) {
-          view.when(() => {
-            addPinToMap(formData.latitude, formData.longitude)
+          const point = {
+            type: "point",
+            longitude: formData.longitude,
+            latitude: formData.latitude,
+            spatialReference: { wkid: 4326 }
+          }
+
+          const markerSymbol = {
+            type: "simple-marker",
+            style: "circle",
+            color: [91, 33, 182],
+            outline: {
+              color: [255, 255, 255],
+              width: 2
+            },
+            size: "20px"
+          }
+
+          const pinGraphic = new Graphic({
+            geometry: point,
+            symbol: markerSymbol
+          })
+
+          graphicsLayer.add(pinGraphic)
+
+          view.goTo({
+            target: point,
+            zoom: 19
           })
         }
-
-        // Confirma que o mapa foi carregado
-        view.when(() => {
-          console.log("Mapa carregado com sucesso!")
-        })
       } catch (error) {
         console.error("Erro ao inicializar o mapa:", error)
       }
@@ -1236,7 +1385,7 @@ const getCurrentLocation = () => {
 
 .map-fields-layout {
   display: grid;
-  grid-template-columns: minmax(500px, 1fr) minmax(450px, 500px);
+  grid-template-columns: 1fr 450px; /* Mapa menor e formulário com largura fixa */
   gap: 2rem;
   align-items: start;
   margin: 0 2rem;
@@ -1244,7 +1393,7 @@ const getCurrentLocation = () => {
 
 .map-section {
   position: relative;
-  height: 500px;
+  height: 450px; /* Altura reduzida */
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.8);
@@ -1315,14 +1464,45 @@ const getCurrentLocation = () => {
 .fields-section {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  height: 500px;
+  gap: 1.25rem;
+  height: 450px; /* Mesma altura do mapa */
   overflow-y: auto;
-  padding: 0.5rem 1rem 0.5rem 0;
+  padding-right: 1rem;
 }
 
+/* Campos de Endereço */
+.address-fields {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1.25rem;
+}
+
+:deep(.v-text-field) {
+  margin-bottom: 1rem;
+}
+
+:deep(.v-text-field:last-child) {
+  margin-bottom: 0;
+}
+
+:deep(.v-text-field .v-field) {
+  border-radius: 8px !important;
+  transition: all 0.2s ease;
+}
+
+:deep(.v-text-field .v-field:hover) {
+  border-color: #6366f1 !important;
+}
+
+:deep(.v-text-field .v-field--focused) {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* Scrollbar personalizado */
 .fields-section::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .fields-section::-webkit-scrollbar-track {
@@ -1339,19 +1519,10 @@ const getCurrentLocation = () => {
   background: #94a3b8;
 }
 
-/* Ajustes dos campos */
-.address-fields {
-  padding: 0.5rem;
-}
-
-:deep(.v-text-field) {
-  margin-bottom: 1rem;
-}
-
-/* Responsividade atualizada */
+/* Responsividade */
 @media (max-width: 1200px) {
   .map-fields-layout {
-    grid-template-columns: minmax(400px, 1fr) minmax(400px, 450px);
+    grid-template-columns: 1fr 400px;
     gap: 1.5rem;
     margin: 0 1.5rem;
   }
@@ -1372,6 +1543,11 @@ const getCurrentLocation = () => {
     max-height: none;
     overflow-y: visible;
     padding: 0;
+  }
+
+  .search-field {
+    position: relative;
+    margin-bottom: 1rem;
   }
 }
 
@@ -1436,5 +1612,11 @@ const getCurrentLocation = () => {
   .coordinate-item {
     justify-content: flex-start;
   }
+}
+
+/* Estilo do campo de busca do ArcGIS */
+.search-field,
+.search-container {
+  display: none;
 }
 </style> 
