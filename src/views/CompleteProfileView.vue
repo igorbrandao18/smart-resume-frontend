@@ -105,7 +105,7 @@
             </v-row>
           </div>
 
-          <!-- Card do Mapa e Localização -->
+          <!-- Card de Mapa e Localização -->
           <div class="form-card map-card">
             <div class="card-header">
               <div class="header-icon">
@@ -118,214 +118,171 @@
             </div>
 
             <!-- Layout do Mapa e Campos -->
-            <div class="location-layout">
+            <div class="map-fields-layout">
               <!-- Seção do Mapa -->
               <div class="map-section">
-                <div class="map-container">
-                  <div id="viewDiv" ref="mapViewDiv" class="map-view"></div>
-                  
-                  <!-- Barra de Pesquisa -->
-                  <div class="custom-search-container">
-                    <div class="search-wrapper">
-                      <v-icon icon="mdi-magnify" color="primary" size="20" class="search-icon" />
-                      <input 
-                        type="text" 
-                        placeholder="Digite um endereço para buscar..." 
-                        class="search-input"
-                        v-model="searchQuery"
-                        @input="handleSearchInput"
-                      />
-                    </div>
-                    <!-- Resultados da Busca -->
-                    <div class="search-results" v-if="searchResults.length > 0">
-                      <div 
-                        v-for="(result, index) in searchResults" 
-                        :key="index"
-                        class="search-result-item"
-                        @click="selectSearchResult(result)"
-                      >
-                        <div class="result-icon">
-                          <v-icon :icon="result.type_icon" size="16" color="primary" />
-                        </div>
-                        <div class="result-content">
-                          <div class="result-title">{{ result.display_name }}</div>
-                          <div class="result-subtitle">{{ result.formatted_address }}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div id="viewDiv" ref="mapViewDiv"></div>
+                
+                <!-- Botão de Localização -->
+                <div class="custom-locate-btn" @click="getCurrentLocation" :class="{ loading: isLocating }">
+                  <v-icon icon="mdi-crosshairs-gps" color="primary" />
+                </div>
 
-                  <!-- Botão de Localização -->
-                  <div class="custom-locate-btn" @click="getCurrentLocation" :class="{ loading: isLocating }">
-                    <v-icon icon="mdi-crosshairs-gps" color="primary" />
+                <!-- Coordenadas -->
+                <div class="coordinates-display">
+                  <div class="coordinate-item">
+                    <v-icon icon="mdi-latitude" color="primary" size="20" />
+                    <span class="coordinate-label">Latitude:</span>
+                    <span class="coordinate-value">{{ formData.latitude ? formData.latitude.toFixed(6) : '0.000000' }}°</span>
+                  </div>
+                  <div class="coordinate-item">
+                    <v-icon icon="mdi-longitude" color="primary" size="20" />
+                    <span class="coordinate-label">Longitude:</span>
+                    <span class="coordinate-value">{{ formData.longitude ? formData.longitude.toFixed(6) : '0.000000' }}°</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Seção de Informações -->
-              <div class="info-section">
-                <!-- Card de Coordenadas -->
-                <div class="coordinates-section">
-                  <div class="coordinates-grid">
-                    <div class="coordinate-box">
-                      <div class="coordinate-content">
-                        <span class="coordinate-label">Latitude</span>
-                        <span class="coordinate-value">{{ formData.latitude ? formData.latitude.toFixed(6) : '0.000000' }}°</span>
-                      </div>
-                      <v-btn
-                        icon="mdi-content-copy"
-                        variant="text"
-                        size="small"
-                        @click="copyToClipboard(formData.latitude)"
-                      />
-                    </div>
-                    <div class="coordinate-box">
-                      <div class="coordinate-content">
-                        <span class="coordinate-label">Longitude</span>
-                        <span class="coordinate-value">{{ formData.longitude ? formData.longitude.toFixed(6) : '0.000000' }}°</span>
-                      </div>
-                      <v-btn
-                        icon="mdi-content-copy"
-                        variant="text"
-                        size="small"
-                        @click="copyToClipboard(formData.longitude)"
-                      />
-                    </div>
-                  </div>
+              <!-- Seção de Campos -->
+              <div class="fields-section">
+                <!-- Campo de Busca -->
+                <div class="search-field">
+                  <LocationSearch
+                    v-model="searchQuery"
+                    @select="selectSearchResult"
+                  />
                 </div>
 
-                <!-- Card de Endereço -->
-                <div class="address-section">
-                  <div class="address-fields">
-                    <v-row>
-                      <v-col cols="12" md="3">
-                        <v-text-field
-                          v-model="formData.zipCode"
-                          label="CEP*"
-                          placeholder="00000-000"
-                          variant="outlined"
-                          :error-messages="errors.zipCode"
-                          @blur="handleCepBlur"
-                          class="modern-input"
-                          density="comfortable"
-                          hide-details
-                        >
-                          <template v-slot:prepend>
-                            <v-icon icon="mdi-mailbox" color="primary" />
-                          </template>
-                        </v-text-field>
-                      </v-col>
+                <!-- Campos de Endereço -->
+                <div class="address-fields">
+                  <v-row>
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="formData.zipCode"
+                        label="CEP*"
+                        placeholder="00000-000"
+                        variant="outlined"
+                        :error-messages="errors.zipCode"
+                        @blur="handleCepBlur"
+                        class="modern-input"
+                        density="comfortable"
+                        hide-details
+                      >
+                        <template v-slot:prepend>
+                          <v-icon icon="mdi-mailbox" color="primary" />
+                        </template>
+                      </v-text-field>
+                    </v-col>
 
-                      <v-col cols="12" md="7">
-                        <v-text-field
-                          v-model="formData.street"
-                          label="Logradouro*"
-                          placeholder="Nome da rua, avenida, etc"
-                          variant="outlined"
-                          :readonly="isLoadingAddress"
-                          :loading="isLoadingAddress"
-                          @update:model-value="updateMapFromForm"
-                          class="modern-input"
-                          density="comfortable"
-                          hide-details
-                        >
-                          <template v-slot:prepend>
-                            <v-icon icon="mdi-road-variant" color="primary" />
-                          </template>
-                        </v-text-field>
-                      </v-col>
+                    <v-col cols="12" md="8">
+                      <v-text-field
+                        v-model="formData.street"
+                        label="Logradouro*"
+                        placeholder="Nome da rua, avenida, etc"
+                        variant="outlined"
+                        :readonly="isLoadingAddress"
+                        :loading="isLoadingAddress"
+                        @update:model-value="updateMapFromForm"
+                        class="modern-input"
+                        density="comfortable"
+                        hide-details
+                      >
+                        <template v-slot:prepend>
+                          <v-icon icon="mdi-road-variant" color="primary" />
+                        </template>
+                      </v-text-field>
+                    </v-col>
 
-                      <v-col cols="12" md="2">
-                        <v-text-field
-                          v-model="formData.number"
-                          label="Número*"
-                          placeholder="Nº"
-                          variant="outlined"
-                          @update:model-value="updateMapFromForm"
-                          class="modern-input"
-                          density="comfortable"
-                          hide-details
-                        >
-                          <template v-slot:prepend>
-                            <v-icon icon="mdi-pound" color="primary" />
-                          </template>
-                        </v-text-field>
-                      </v-col>
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="formData.number"
+                        label="Número*"
+                        placeholder="Nº"
+                        variant="outlined"
+                        @update:model-value="updateMapFromForm"
+                        class="modern-input"
+                        density="comfortable"
+                        hide-details
+                      >
+                        <template v-slot:prepend>
+                          <v-icon icon="mdi-pound" color="primary" />
+                        </template>
+                      </v-text-field>
+                    </v-col>
 
-                      <v-col cols="12" md="4">
-                        <v-text-field
-                          v-model="formData.complement"
-                          label="Complemento"
-                          placeholder="Apto, Sala, etc"
-                          variant="outlined"
-                          class="modern-input"
-                          density="comfortable"
-                          hide-details
-                        >
-                          <template v-slot:prepend>
-                            <v-icon icon="mdi-office-building-marker" color="primary" />
-                          </template>
-                        </v-text-field>
-                      </v-col>
+                    <v-col cols="12" md="8">
+                      <v-text-field
+                        v-model="formData.complement"
+                        label="Complemento"
+                        placeholder="Apto, Sala, etc"
+                        variant="outlined"
+                        class="modern-input"
+                        density="comfortable"
+                        hide-details
+                      >
+                        <template v-slot:prepend>
+                          <v-icon icon="mdi-office-building-marker" color="primary" />
+                        </template>
+                      </v-text-field>
+                    </v-col>
 
-                      <v-col cols="12" md="8">
-                        <v-text-field
-                          v-model="formData.neighborhood"
-                          label="Bairro*"
-                          placeholder="Nome do bairro"
-                          variant="outlined"
-                          :readonly="isLoadingAddress"
-                          :loading="isLoadingAddress"
-                          @update:model-value="updateMapFromForm"
-                          class="modern-input"
-                          density="comfortable"
-                          hide-details
-                        >
-                          <template v-slot:prepend>
-                            <v-icon icon="mdi-home-group" color="primary" />
-                          </template>
-                        </v-text-field>
-                      </v-col>
+                    <v-col cols="12" md="12">
+                      <v-text-field
+                        v-model="formData.neighborhood"
+                        label="Bairro*"
+                        placeholder="Nome do bairro"
+                        variant="outlined"
+                        :readonly="isLoadingAddress"
+                        :loading="isLoadingAddress"
+                        @update:model-value="updateMapFromForm"
+                        class="modern-input"
+                        density="comfortable"
+                        hide-details
+                      >
+                        <template v-slot:prepend>
+                          <v-icon icon="mdi-home-group" color="primary" />
+                        </template>
+                      </v-text-field>
+                    </v-col>
 
-                      <v-col cols="12" md="8">
-                        <v-text-field
-                          v-model="formData.city"
-                          label="Cidade*"
-                          placeholder="Nome da cidade"
-                          variant="outlined"
-                          :readonly="isLoadingAddress"
-                          :loading="isLoadingAddress"
-                          @update:model-value="updateMapFromForm"
-                          class="modern-input"
-                          density="comfortable"
-                          hide-details
-                        >
-                          <template v-slot:prepend>
-                            <v-icon icon="mdi-city-variant" color="primary" />
-                          </template>
-                        </v-text-field>
-                      </v-col>
+                    <v-col cols="12" md="8">
+                      <v-text-field
+                        v-model="formData.city"
+                        label="Cidade*"
+                        placeholder="Nome da cidade"
+                        variant="outlined"
+                        :readonly="isLoadingAddress"
+                        :loading="isLoadingAddress"
+                        @update:model-value="updateMapFromForm"
+                        class="modern-input"
+                        density="comfortable"
+                        hide-details
+                      >
+                        <template v-slot:prepend>
+                          <v-icon icon="mdi-city-variant" color="primary" />
+                        </template>
+                      </v-text-field>
+                    </v-col>
 
-                      <v-col cols="12" md="4">
-                        <v-text-field
-                          v-model="formData.state"
-                          label="UF*"
-                          placeholder="UF"
-                          variant="outlined"
-                          :readonly="isLoadingAddress"
-                          :loading="isLoadingAddress"
-                          @update:model-value="updateMapFromForm"
-                          class="modern-input"
-                          density="comfortable"
-                          hide-details
-                        >
-                          <template v-slot:prepend>
-                            <v-icon icon="mdi-map" color="primary" />
-                          </template>
-                        </v-text-field>
-                      </v-col>
-                    </v-row>
-                  </div>
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="formData.state"
+                        label="UF*"
+                        placeholder="UF"
+                        variant="outlined"
+                        :readonly="isLoadingAddress"
+                        :loading="isLoadingAddress"
+                        @update:model-value="updateMapFromForm"
+                        class="modern-input"
+                        density="comfortable"
+                        hide-details
+                      >
+                        <template v-slot:prepend>
+                          <v-icon icon="mdi-map" color="primary" />
+                        </template>
+                      </v-text-field>
+                    </v-col>
+                  </v-row>
                 </div>
               </div>
             </div>
@@ -424,14 +381,18 @@ const createMarkerSymbol = () => ({
 
 // Função para adicionar pin no mapa
 const addPinToMap = (latitude: number, longitude: number) => {
-  if (!mapState.view) return
+  if (!mapState.view || !mapState.graphicsLayer) {
+    console.error('Mapa não inicializado')
+    return
+  }
 
   try {
+    // Atualiza as coordenadas no formulário primeiro
+    formData.latitude = latitude
+    formData.longitude = longitude
+
     // Remove o pin atual se existir
-    if (mapState.currentPin) {
-      mapState.graphicsLayer.remove(mapState.currentPin)
-      mapState.currentPin = null
-    }
+    mapState.graphicsLayer.removeAll()
 
     // Cria o ponto
     const point = {
@@ -440,44 +401,24 @@ const addPinToMap = (latitude: number, longitude: number) => {
       latitude
     }
 
-    // Cria o símbolo do pin
-    const pinSymbol = {
-      type: "simple-marker",
-      style: "circle",
-      color: [91, 33, 182],
-      outline: {
-        color: [255, 255, 255],
-        width: 2
-      },
-      size: "12px"
-    }
-
-    // Cria o novo pin
+    // Cria o pin
     const pinGraphic = new (window as any).esri.Graphic({
       geometry: point,
-      symbol: pinSymbol
+      symbol: createMarkerSymbol()
     })
 
-    // Adiciona o pin e salva a referência
+    // Adiciona o pin
     mapState.graphicsLayer.add(pinGraphic)
-    mapState.currentPin = pinGraphic
 
-    // Atualiza as coordenadas no formulário
-    formData.latitude = latitude
-    formData.longitude = longitude
-
-    // Centraliza o mapa na nova posição de forma segura
-    const target = {
+    // Centraliza o mapa na nova posição com animação
+    mapState.view.goTo({
       target: point,
       zoom: 18
-    }
+    }, {
+      duration: 500,
+      easing: "ease-out"
+    })
 
-    // Usa setTimeout para garantir que a view está pronta
-    setTimeout(() => {
-      if (mapState.view && !mapState.view.destroyed) {
-        mapState.view.goTo(target)
-      }
-    }, 100)
   } catch (error) {
     console.error('Erro ao adicionar pin:', error)
   }
@@ -523,7 +464,7 @@ onMounted(async () => {
           container: "viewDiv",
           map: map,
           zoom: 4,
-          center: [-53.2316, -10.2491],
+          center: [-53.2316, -10.2491], // Centro do Brasil
           constraints: {
             rotationEnabled: false,
             minZoom: 4,
@@ -538,9 +479,17 @@ onMounted(async () => {
 
         // Configura o evento de clique no mapa
         view.on("click", async (event: any) => {
-          const { latitude, longitude } = event.mapPoint
-          addPinToMap(latitude, longitude)
-          await reverseGeocodeWithNominatim(latitude, longitude)
+          try {
+            const { latitude, longitude } = event.mapPoint
+            
+            // Adiciona o pin e atualiza coordenadas
+            addPinToMap(latitude, longitude)
+            
+            // Busca o endereço das coordenadas
+            await reverseGeocodeWithNominatim(latitude, longitude)
+          } catch (error) {
+            console.error('Erro ao processar clique no mapa:', error)
+          }
         })
 
         // Se já tiver coordenadas salvas, mostra o pin
@@ -1285,177 +1234,54 @@ const getCurrentLocation = () => {
   margin-bottom: 2rem;
 }
 
-.location-layout {
-  display: flex;
-  flex-direction: column;
+.map-fields-layout {
+  display: grid;
+  grid-template-columns: minmax(500px, 1fr) minmax(450px, 500px);
   gap: 2rem;
+  align-items: start;
+  margin: 0 2rem;
 }
 
 .map-section {
-  width: 100%;
-  height: 400px !important;
   position: relative;
-  background: #f8fafc;
-  border-radius: 16px;
+  height: 500px;
+  border-radius: 12px;
   overflow: hidden;
-  margin: 0 auto;
-  max-width: 800px;
-}
-
-.map-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   background: #f8fafc;
 }
 
 #viewDiv {
-  width: 100%;
-  height: 100%;
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   background: #f8fafc;
 }
 
-/* Barra de Pesquisa Aprimorada */
-.custom-search-container {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  right: 24px;
-  max-width: 600px;
-  z-index: 20;
-}
-
-.search-wrapper {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
-  border-radius: 20px;
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  transition: all 0.3s ease;
-}
-
-.search-wrapper:hover,
-.search-wrapper:focus-within {
-  background: white;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
-}
-
-.search-input {
-  border: none;
-  outline: none;
-  width: 100%;
-  font-size: 1.1rem;
-  color: #1e293b;
-  background: transparent;
-  padding: 0.5rem;
-}
-
-/* Resultados da Busca */
-.search-results {
-  position: absolute;
-  top: calc(100% + 12px);
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
-  border-radius: 20px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.search-result-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.search-result-item:hover {
-  background: rgba(99, 102, 241, 0.08);
-}
-
-.result-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: rgba(99, 102, 241, 0.1);
-  border-radius: 12px;
-}
-
-.result-content {
-  flex: 1;
-}
-
-.result-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-}
-
-.result-subtitle {
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
-/* Seção de Informações */
-.info-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
 /* Coordenadas */
-.coordinates-section {
-  background: white;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.coordinates-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.coordinates-display {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
   gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }
 
-.coordinate-box {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 16px;
-  padding: 1rem 1.25rem;
+.coordinate-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
-}
-
-.coordinate-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
-}
-
-.coordinate-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.75rem;
 }
 
 .coordinate-label {
@@ -1466,138 +1292,72 @@ const getCurrentLocation = () => {
 
 .coordinate-value {
   font-family: 'Roboto Mono', monospace;
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   color: #1e293b;
   font-weight: 600;
-  letter-spacing: -0.5px;
 }
 
-/* Endereço */
-.address-section {
-  background: white;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.address-fields {
+/* Seção de Campos */
+.fields-section {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  height: 500px;
+  overflow-y: auto;
+  padding: 0.5rem 1rem 0.5rem 0;
 }
 
-/* Inputs Modernos */
-:deep(.v-field) {
-  border-radius: 16px !important;
-  background: white !important;
-  transition: all 0.2s ease;
+.fields-section::-webkit-scrollbar {
+  width: 6px;
 }
 
-:deep(.v-field--variant-outlined) {
-  border: 1px solid rgba(226, 232, 240, 0.8) !important;
-  background: #f8fafc !important;
+.fields-section::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
 }
 
-:deep(.v-field--variant-outlined:hover) {
-  border-color: #6366f1 !important;
-  background: white !important;
+.fields-section::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
-:deep(.v-field--focused) {
-  border-color: #6366f1 !important;
-  background: white !important;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+.fields-section::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
-:deep(.v-field__input) {
-  font-size: 1rem !important;
-  padding: 16px !important;
+/* Ajustes dos campos */
+.address-fields {
+  padding: 0.5rem;
 }
 
-:deep(.v-field__prepend-inner) {
-  padding-inline-start: 16px !important;
+:deep(.v-text-field) {
+  margin-bottom: 1rem;
 }
 
-:deep(.v-label) {
-  font-size: 0.875rem !important;
-  color: #475569 !important;
-  font-weight: 500 !important;
-}
-
-/* Botão de Submit */
-.submit-section {
-  text-align: center;
-  margin-top: 4rem;
-  padding-bottom: 2rem;
-}
-
-.submit-button {
-  font-size: 1.25rem !important;
-  padding: 1.75rem 4rem !important;
-  border-radius: 16px !important;
-  text-transform: none !important;
-  letter-spacing: -0.5px !important;
-  font-weight: 600 !important;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
-  box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.4) !important;
-  transition: all 0.3s ease !important;
-}
-
-.submit-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 20px 32px -8px rgba(99, 102, 241, 0.5) !important;
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
-}
-
-/* Responsividade */
+/* Responsividade atualizada */
 @media (max-width: 1200px) {
-  .form-container {
-    margin: 1rem;
-  }
-
-  .map-section {
-    height: 500px;
-  }
-
-  .title {
-    font-size: 2.5rem;
-  }
-
-  .header-icon {
-    width: 64px;
-    height: 64px;
-  }
-
-  .form-card {
-    padding: 2rem;
+  .map-fields-layout {
+    grid-template-columns: minmax(400px, 1fr) minmax(400px, 450px);
+    gap: 1.5rem;
+    margin: 0 1.5rem;
   }
 }
 
-@media (max-width: 768px) {
-  .complete-profile-page {
-    padding: 1rem;
-  }
-
-  .form-container {
-    margin: 0;
+@media (max-width: 992px) {
+  .map-fields-layout {
+    grid-template-columns: 1fr;
+    margin: 0 1rem;
   }
 
   .map-section {
     height: 400px;
   }
 
-  .title {
-    font-size: 2rem;
-  }
-
-  .submit-button {
-    width: 100%;
-    padding: 1.5rem !important;
-  }
-
-  .coordinates-grid {
-    grid-template-columns: 1fr;
+  .fields-section {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+    padding: 0;
   }
 }
 
@@ -1605,7 +1365,6 @@ const getCurrentLocation = () => {
 :deep(.esri-view) {
   width: 100% !important;
   height: 100% !important;
-  background: #f8fafc !important;
 }
 
 :deep(.esri-view-surface) {
@@ -1613,23 +1372,7 @@ const getCurrentLocation = () => {
 }
 
 :deep(.esri-ui) {
-  z-index: 10 !important;
-}
-
-.map-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: #f8fafc;
-}
-
-#viewDiv {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: #f8fafc;
+  z-index: 5 !important;
 }
 
 /* Botão de Localização */
@@ -1638,22 +1381,22 @@ const getCurrentLocation = () => {
   bottom: 24px;
   right: 24px;
   background: white;
-  border-radius: 16px;
-  width: 48px;
-  height: 48px;
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   transition: all 0.3s ease;
-  z-index: 20;
+  z-index: 10;
 }
 
 .custom-locate-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .custom-locate-btn.loading {
