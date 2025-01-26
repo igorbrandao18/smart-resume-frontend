@@ -1183,12 +1183,47 @@ const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
     
     // Atualiza o formulário com os dados do endereço
     if (data.address) {
-      formData.street = data.address.road || data.address.street || ''
-      formData.number = data.address.house_number || ''
-      formData.neighborhood = data.address.suburb || data.address.neighbourhood || ''
-      formData.city = data.address.city || data.address.town || data.address.municipality || ''
-      formData.state = data.address.state || ''
-      formData.zipCode = data.address.postcode || ''
+      // Logradouro: tenta diferentes campos possíveis
+      formData.street = data.address.road || 
+                       data.address.street || 
+                       data.address.footway || 
+                       data.address.path || 
+                       ''
+
+      // Número: tenta diferentes formatos
+      formData.number = data.address.house_number || 
+                       data.address.street_number || 
+                       ''
+
+      // Bairro: tenta diferentes campos possíveis
+      formData.neighborhood = data.address.suburb || 
+                            data.address.neighbourhood || 
+                            data.address.district || 
+                            data.address.subdistrict || 
+                            ''
+
+      // Cidade: tenta diferentes campos possíveis
+      formData.city = data.address.city || 
+                     data.address.town || 
+                     data.address.municipality || 
+                     ''
+
+      // Estado: tenta primeiro a sigla, depois o nome completo
+      formData.state = data.address.state_code || 
+                      data.address.state || 
+                      ''
+
+      // CEP
+      formData.zipCode = data.address.postcode || 
+                        data.address.postal_code || 
+                        ''
+
+      // Complemento
+      formData.complement = data.address.suburb ? 
+                          `${data.address.suburb}` : 
+                          ''
+
+      console.log('Endereço encontrado:', data.address)
     }
 
     return data
