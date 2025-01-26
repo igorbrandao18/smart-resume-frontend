@@ -135,4 +135,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 📞 Suporte
 
-Para suporte, abra uma issue no repositório: https://github.com/igorbrandao/smart-resume-frontend
+Para suporte, abra uma issue no repositório: https://github.com/igorbrandao18/smart-resume-frontend
