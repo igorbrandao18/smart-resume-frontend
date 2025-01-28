@@ -121,7 +121,19 @@
             <div class="map-fields-layout">
               <!-- Seção do Mapa -->
               <div class="map-section">
-                <div id="viewDiv" ref="mapViewDiv"></div>
+                <div id="viewDiv" ref="mapViewDiv">
+                  <div v-if="isMapLoading" class="map-loading">
+                    <v-progress-circular indeterminate color="primary" />
+                    <div class="mt-2">Carregando mapa...</div>
+                  </div>
+                  <div v-if="mapError" class="map-error">
+                    <v-icon icon="mdi-alert-circle" color="error" size="32" class="mb-2" />
+                    <div>{{ mapError }}</div>
+                    <v-btn color="error" variant="text" class="mt-2" @click="initializeMap">
+                      Tentar novamente
+                    </v-btn>
+                  </div>
+                </div>
 
                 <!-- Botão de Localização -->
                 <div class="custom-locate-btn" @click="getCurrentLocation" :class="{ loading: isLocating }">
@@ -142,141 +154,148 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <!-- Seção de Campos -->
-              <div class="fields-section">
-                <!-- Campos de Endereço -->
-                <div class="address-fields">
-                  <v-row>
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="formData.zipCode"
-                        label="CEP*"
-                        placeholder="00000-000"
-                        variant="outlined"
-                        :error-messages="errors.zipCode"
-                        @blur="handleCepBlur"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-mailbox" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </v-col>
-
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="formData.street"
-                        label="Logradouro*"
-                        placeholder="Nome da rua, avenida, etc"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-road-variant" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </v-col>
-
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="formData.number"
-                        label="Número*"
-                        placeholder="Nº"
-                        variant="outlined"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-pound" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </v-col>
-
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="formData.complement"
-                        label="Complemento"
-                        placeholder="Apto, Sala, etc"
-                        variant="outlined"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-office-building-marker" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </v-col>
-
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="formData.neighborhood"
-                        label="Bairro*"
-                        placeholder="Nome do bairro"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-home-group" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </v-col>
-
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="formData.city"
-                        label="Cidade*"
-                        placeholder="Nome da cidade"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-city-variant" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </v-col>
-
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="formData.state"
-                        label="UF*"
-                        placeholder="UF"
-                        variant="outlined"
-                        :readonly="isLoadingAddress"
-                        :loading="isLoadingAddress"
-                        @update:model-value="updateMapFromForm"
-                        class="modern-input"
-                        density="comfortable"
-                        hide-details
-                      >
-                        <template v-slot:prepend>
-                          <v-icon icon="mdi-map" color="primary" />
-                        </template>
-                      </v-text-field>
-                    </v-col>
-                  </v-row>
-                </div>
+          <!-- Seção de Campos de Endereço -->
+          <div class="address-section">
+            <div class="section-header">
+              <v-icon icon="mdi-map-marker-radius" color="primary" size="32" />
+              <div class="header-text">
+                <h3>Endereço da Localização</h3>
+                <p>Clique no mapa ou preencha os campos manualmente</p>
               </div>
+            </div>
+
+            <div class="address-grid">
+              <v-row>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.zipCode"
+                    label="CEP*"
+                    placeholder="00000-000"
+                    variant="outlined"
+                    :error-messages="errors.zipCode"
+                    @blur="handleCepBlur"
+                    class="modern-input"
+                    density="comfortable"
+                    hide-details
+                  >
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-mailbox" color="primary" />
+                    </template>
+                  </v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="8">
+                  <v-text-field
+                    v-model="formData.street"
+                    label="Logradouro*"
+                    placeholder="Nome da rua, avenida, etc"
+                    variant="outlined"
+                    :readonly="isLoadingAddress"
+                    :loading="isLoadingAddress"
+                    @update:model-value="updateMapFromForm"
+                    class="modern-input"
+                    density="comfortable"
+                    hide-details
+                  >
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-road-variant" color="primary" />
+                    </template>
+                  </v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="2">
+                  <v-text-field
+                    v-model="formData.number"
+                    label="Número*"
+                    placeholder="Nº"
+                    variant="outlined"
+                    @update:model-value="updateMapFromForm"
+                    class="modern-input"
+                    density="comfortable"
+                    hide-details
+                  >
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-pound" color="primary" />
+                    </template>
+                  </v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.complement"
+                    label="Complemento"
+                    placeholder="Apto, Sala, etc"
+                    variant="outlined"
+                    class="modern-input"
+                    density="comfortable"
+                    hide-details
+                  >
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-office-building-marker" color="primary" />
+                    </template>
+                  </v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="formData.neighborhood"
+                    label="Bairro*"
+                    placeholder="Nome do bairro"
+                    variant="outlined"
+                    :readonly="isLoadingAddress"
+                    :loading="isLoadingAddress"
+                    @update:model-value="updateMapFromForm"
+                    class="modern-input"
+                    density="comfortable"
+                    hide-details
+                  >
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-home-group" color="primary" />
+                    </template>
+                  </v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.city"
+                    label="Cidade*"
+                    placeholder="Nome da cidade"
+                    variant="outlined"
+                    :readonly="isLoadingAddress"
+                    :loading="isLoadingAddress"
+                    @update:model-value="updateMapFromForm"
+                    class="modern-input"
+                    density="comfortable"
+                    hide-details
+                  >
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-city-variant" color="primary" />
+                    </template>
+                  </v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="2">
+                  <v-text-field
+                    v-model="formData.state"
+                    label="UF*"
+                    placeholder="UF"
+                    variant="outlined"
+                    :readonly="isLoadingAddress"
+                    :loading="isLoadingAddress"
+                    @update:model-value="updateMapFromForm"
+                    class="modern-input"
+                    density="comfortable"
+                    hide-details
+                  >
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-map" color="primary" />
+                    </template>
+                  </v-text-field>
+                </v-col>
+              </v-row>
             </div>
           </div>
 
@@ -313,6 +332,8 @@ const userStore = useUserStore()
 const isLoading = ref(false)
 const isLoadingAddress = ref(false)
 const mapViewDiv = ref<HTMLElement | null>(null)
+const isMapLoading = ref(true)
+const mapError = ref('')
 
 let view: any = null
 let searchWidget: any = null
@@ -509,119 +530,119 @@ const addPinToMap = (latitude: number, longitude: number) => {
   }
 }
 
-// Inicialização do mapa
-onMounted(async () => {
-  // Carrega o CSS do ArcGIS primeiro
-  const link = document.createElement('link')
-  link.rel = 'stylesheet'
-  link.href = 'https://js.arcgis.com/4.29/esri/themes/light/main.css'
-  document.head.appendChild(link)
+// Função para inicializar o mapa
+const initializeMap = async () => {
+  isMapLoading.value = true
+  mapError.value = ''
 
-  // Espera o CSS carregar
-  await new Promise((resolve) => {
-    link.onload = resolve
-  })
+  try {
+    // Carrega o CSS do ArcGIS primeiro
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://js.arcgis.com/4.29/esri/themes/light/main.css'
+    document.head.appendChild(link)
 
-  // Carrega o script do ArcGIS
-  const script = document.createElement('script')
-  script.src = 'https://js.arcgis.com/4.29/'
-  document.head.appendChild(script)
+    // Espera o CSS carregar
+    await new Promise((resolve) => {
+      link.onload = resolve
+    })
 
-  script.onload = () => {
-    (window as any).require([
-      "esri/config",
-      "esri/Map",
-      "esri/views/MapView",
-      "esri/Graphic",
-      "esri/layers/GraphicsLayer"
-    ], function(esriConfig: any, Map: any, MapView: any, Graphic: any, GraphicsLayer: any) {
+    // Carrega o script do ArcGIS
+    const script = document.createElement('script')
+    script.src = 'https://js.arcgis.com/4.29/'
+    document.head.appendChild(script)
+
+    await new Promise((resolve, reject) => {
+      script.onload = resolve
+      script.onerror = () => reject(new Error('Erro ao carregar o script do ArcGIS'))
+    })
+
+    // Configura o mapa
+    await new Promise((resolve, reject) => {
       try {
-        // Configura a API key
-        esriConfig.apiKey = "AAPT3NKHt6i2urmWtqOuugvr9dU54lMiXG_7Pdh38YCF8q4ByuTuY9Cj7w0vtlZhj4HO9VMrZko3PvEm9Kw33ZRv8I0CtSyjX6FgTtE05oFtxkePOOVYt7PYSE_I5BKuhNzgBwgiohDiq3bzd7saOmejK18RMz0D2aWl1JrguDruoU2FeROB_c55C6HToG_I6D-y2Q5JNjOoNqFXV0_0LkCNqMZMLtxMMH9Q2bioGnr0oy8";
-
-        // Cria o mapa base
-        const map = new Map({
-          basemap: 'arcgis/navigation'
-        })
-
-        // Cria a camada de gráficos
-        const graphicsLayer = new GraphicsLayer()
-        map.add(graphicsLayer)
-
-        // Configura a visualização do mapa
-        const view = new MapView({
-          container: "viewDiv",
-          map: map,
-          zoom: 5,  // Aumentando zoom inicial
-          center: [-53.2316, -10.2491], // Centro do Brasil
-          constraints: {
-            rotationEnabled: false,
-            minZoom: 4,
-            maxZoom: 22  // Aumentando zoom máximo
-          }
-        })
-
-        // Salva as referências no estado
-        mapState.map = map
-        mapState.view = view
-        mapState.graphicsLayer = graphicsLayer
-
-        // Configura o evento de clique no mapa
-        view.on("click", async (event: any) => {
+        (window as any).require([
+          "esri/config",
+          "esri/Map",
+          "esri/views/MapView",
+          "esri/Graphic",
+          "esri/layers/GraphicsLayer"
+        ], function(esriConfig: any, Map: any, MapView: any, Graphic: any, GraphicsLayer: any) {
           try {
-            const { latitude, longitude } = event.mapPoint
-            
-            // Atualiza as coordenadas no formulário
-            formData.latitude = latitude
-            formData.longitude = longitude
-            
-            // Adiciona o pin na localização atual
-            addPinToMap(latitude, longitude)
+            // Configura a API key
+            esriConfig.apiKey = import.meta.env.VITE_ARCGIS_API_KEY
 
-            // Busca o endereço
-            await reverseGeocodeWithNominatim(latitude, longitude)
+            // Cria o mapa base
+            const map = new Map({
+              basemap: 'arcgis/navigation'
+            })
+
+            // Cria a camada de gráficos
+            const graphicsLayer = new GraphicsLayer()
+            map.add(graphicsLayer)
+
+            // Configura a visualização do mapa
+            const view = new MapView({
+              container: mapViewDiv.value!,
+              map: map,
+              zoom: 5,
+              center: [-53.2316, -10.2491], // Centro do Brasil
+              constraints: {
+                rotationEnabled: false,
+                minZoom: 4,
+                maxZoom: 22
+              }
+            })
+
+            // Salva as referências no estado
+            mapState.map = map
+            mapState.view = view
+            mapState.graphicsLayer = graphicsLayer
+
+            // Configura o evento de clique no mapa
+            view.on("click", async (event: any) => {
+              try {
+                const { latitude, longitude } = event.mapPoint
+                
+                // Atualiza as coordenadas no formulário
+                formData.latitude = latitude
+                formData.longitude = longitude
+                
+                // Adiciona o pin na localização atual
+                addPinToMap(latitude, longitude)
+
+                // Busca o endereço
+                await reverseGeocodeWithNominatim(latitude, longitude)
+              } catch (error) {
+                console.error('Erro ao processar clique no mapa:', error)
+              }
+            })
+
+            // Se já tiver coordenadas salvas, mostra o pin
+            if (formData.latitude && formData.longitude) {
+              addPinToMap(formData.latitude, formData.longitude)
+            }
+
+            resolve(true)
           } catch (error) {
-            console.error('Erro ao processar clique no mapa:', error)
+            reject(error)
           }
         })
-
-        // Se já tiver coordenadas salvas, mostra o pin
-        if (formData.latitude && formData.longitude) {
-          const point = {
-            type: "point",
-            longitude: formData.longitude,
-            latitude: formData.latitude,
-            spatialReference: { wkid: 4326 }
-          }
-
-          const markerSymbol = {
-            type: "simple-marker",
-            style: "circle",
-            color: [91, 33, 182],
-            outline: {
-              color: [255, 255, 255],
-              width: 2
-            },
-            size: "20px"
-          }
-
-          const pinGraphic = new Graphic({
-            geometry: point,
-            symbol: markerSymbol
-          })
-
-          graphicsLayer.add(pinGraphic)
-
-          view.goTo({
-            target: point,
-            zoom: 19
-          })
-        }
       } catch (error) {
-        console.error("Erro ao inicializar o mapa:", error)
+        reject(error)
       }
     })
+
+    isMapLoading.value = false
+  } catch (error: any) {
+    console.error('Erro ao inicializar o mapa:', error)
+    mapError.value = 'Erro ao carregar o mapa. Por favor, tente novamente.'
+    isMapLoading.value = false
   }
+}
+
+// Inicializa o mapa quando o componente é montado
+onMounted(() => {
+  initializeMap()
 })
 
 onUnmounted(() => {
@@ -1123,6 +1144,7 @@ const searchResultTemplate = `
 // Função para buscar endereço por coordenadas
 const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
   try {
+    isLoadingAddress.value = true
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?` +
       new URLSearchParams({
@@ -1149,11 +1171,13 @@ const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
     // Atualiza o formulário com os dados do endereço
     if (data.address) {
       // Logradouro: tenta diferentes campos possíveis
-      formData.street = data.address.road || 
-                       data.address.street || 
-                       data.address.footway || 
-                       data.address.path || 
-                       ''
+      const streetParts = []
+      if (data.address.road) streetParts.push(data.address.road)
+      else if (data.address.street) streetParts.push(data.address.street)
+      else if (data.address.footway) streetParts.push(data.address.footway)
+      else if (data.address.path) streetParts.push(data.address.path)
+      
+      formData.street = streetParts.join(' ').trim()
 
       // Número: tenta diferentes formatos
       formData.number = data.address.house_number || 
@@ -1183,10 +1207,13 @@ const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
                         data.address.postal_code || 
                         ''
 
-      // Complemento
-      formData.complement = data.address.suburb ? 
-                          `${data.address.suburb}` : 
-                          ''
+      // Complemento (opcional)
+      if (data.address.suburb && data.address.suburb !== formData.neighborhood) {
+        formData.complement = data.address.suburb
+      }
+
+      // Limpa erros
+      errors.zipCode = ''
 
       console.log('Endereço encontrado:', data.address)
     }
@@ -1194,7 +1221,10 @@ const reverseGeocodeWithNominatim = async (lat: number, lon: number) => {
     return data
   } catch (error) {
     console.error('Erro na geocodificação reversa:', error)
+    mapError.value = 'Erro ao buscar endereço. Por favor, tente novamente.'
     return null
+  } finally {
+    isLoadingAddress.value = false
   }
 }
 
@@ -1398,29 +1428,56 @@ const getCurrentLocation = () => {
 }
 
 .map-fields-layout {
-  display: grid;
-  grid-template-columns: 1fr 450px; /* Mapa menor e formulário com largura fixa */
-  gap: 2rem;
-  align-items: start;
+  display: block;
   margin: 0 2rem;
 }
 
 .map-section {
   position: relative;
-  height: 450px; /* Altura reduzida */
+  height: 450px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.8);
   background: #f8fafc;
+  margin-bottom: 2rem;
 }
 
 #viewDiv {
-  position: absolute;
+  position: absolute !important;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
   background: #f8fafc;
+}
+
+.map-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #dc2626;
 }
 
 /* Coordenadas */
@@ -1632,5 +1689,93 @@ const getCurrentLocation = () => {
 .search-field,
 .search-container {
   display: none;
+}
+
+/* Seção de Endereço */
+.address-section {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.section-header .header-text {
+  flex: 1;
+}
+
+.section-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.section-header p {
+  color: #64748b;
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+}
+
+.address-grid {
+  background: white;
+  border-radius: 12px;
+}
+
+/* Campos modernos */
+:deep(.modern-input) {
+  margin-bottom: 1rem;
+}
+
+:deep(.modern-input .v-field) {
+  border-radius: 8px !important;
+  transition: all 0.2s ease;
+}
+
+:deep(.modern-input .v-field:hover) {
+  background-color: #f8fafc !important;
+}
+
+:deep(.modern-input .v-field--focused) {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+}
+
+:deep(.modern-input .v-field__input) {
+  font-size: 0.95rem;
+  padding: 8px 12px;
+}
+
+:deep(.modern-input .v-label) {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Responsividade */
+@media (max-width: 960px) {
+  .map-fields-layout {
+    margin: 0 1rem;
+  }
+
+  .address-section {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 0.5rem;
+  }
 }
 </style> 
